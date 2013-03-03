@@ -1,6 +1,6 @@
 # SIML
 
-SIML is the Simplified Markup Language. **[Try it out!](http://padolsey.github.com/siml/)**
+SIML is the Simplified Markup Language. **[Try it out!](http://padolsey.github.com/SIML/)**
 
 ### What is it?
 
