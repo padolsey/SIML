@@ -2,7 +2,7 @@
 <html>
 <head>
 	<meta charset="utf-8"/>
-	<title>D</title>
+	<title>Siml -- Try it out!</title>
 	<style>
 		body { font-family: sans-serif; }
 		#tryout {
@@ -33,7 +33,7 @@
 
 	<div id="tryout">
 		<textarea id="in">
-a.foo#blah{span "ok"}
+TypeSomethingHere
 		</textarea>
 		<pre id="html"></pre>
 		<div id="out"></div>
@@ -58,16 +58,10 @@ a.foo#blah{span "ok"}
 				return;
 			}
 			lastVal = ta.value;
-			//try {
-				var html = siml.angularParser.parse( ta.value, {curly:false, indent:'1234'} )();
-				output.innerHTML = html;
-				htmlOutput.innerHTML = '';
-				htmlOutput.appendChild( document.createTextNode(html) );
-				//return;
-			//} catch(e) {
-			//	throw e;
-			//	console.error(e);
-			//};
+			var html = siml.angularParser.parse( ta.value, {curly:false, indent:'1234'} )();
+			output.innerHTML = html;
+			htmlOutput.innerHTML = '';
+			htmlOutput.appendChild( document.createTextNode(html) );
 		};
 
 		ta.onchange();
