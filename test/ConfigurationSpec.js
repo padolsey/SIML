@@ -15,7 +15,7 @@ describe('Configuration', function() {
 						}\
 					}\
 				}\
-			', { pretty: true, indent: '___:' })()).toBe([
+			', { pretty: true, indent: '___:' })).toBe([
 				'<section id="123">',
 				'___:<header id="456">',
 				'___:___:<h1>',
@@ -47,7 +47,7 @@ describe('Configuration', function() {
 						d\n\
 					e\n\
 				f\n\
-			', {pretty:false})()).toBe([
+			', {pretty:false})).toBe([
 				'<a>',
 					'<b></b>',
 					'<c>',
@@ -65,7 +65,7 @@ describe('Configuration', function() {
 					}\n\
 					e\n\
 				f\n\
-			', {pretty:false})()).toBe([
+			', {pretty:false})).toBe([
 				'<a>',
 					'<b></b>',
 					'<c>',
@@ -85,7 +85,7 @@ describe('Configuration', function() {
 					}\n\
 					e\n\
 				f\n\
-			', {pretty:false,curly:true})()).toBe([
+			', {pretty:false,curly:true})).toBe([
 				// In this case it has assumed a structure of: 'a b c{d} e f':
 				'<a></a>',
 				'<b></b>',

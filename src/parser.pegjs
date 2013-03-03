@@ -39,9 +39,6 @@
 
 		input = input.replace(/^(?:\s*\n)+/g, '');
 
-		//var tabCharacter = input.match(/\n(\s)\s*\S|$/)[1];
-		//var rTabCharacter = RegExp(tabCharacter + '|\\s', 'g');
-
 		var cur;
 		var lvl = 0;
 		var lines = [];
@@ -55,10 +52,6 @@
 
 			var indent = line.match(/^\s*/)[0]; 
 			var indentLevel = (indent.match(/\s/g)||[]).length;
-
-			if (indent.length !== indentLevel) {
-				//throw new Error('Inconsistent tabbing on line')
-			}
 
 			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
 
@@ -162,8 +155,8 @@ child
 element "Element"
 	= selector:selector _ "{" _ "}" _ { return [selector]; }
 	/ selector:selector _ "{" _ children:children _ "}" _ { return [selector, children]; }
-	/ selector:selector _ text:string { return [selector, [['Attribute', ['text', text]]]]; }
-	/ selector:selector _ directive:directive {
+	/ selector:selector [\s ]* text:string { return [selector, [['Attribute', ['text', text]]]]; }
+	/ selector:selector [\s ]* directive:directive {
 		return [ 
 			selector, [ ['Directive', directive] ]
 		]

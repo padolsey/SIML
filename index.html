@@ -140,7 +140,7 @@
 				error.style.display = '';
 				error.innerHTML = '';
 				try {
-					var html = siml.html5.parse( value, {curly: !!curly.checked, indent:'  '} )();
+					var html = siml.html5.parse( value, {curly: !!curly.checked, indent:'  '} );
 				} catch(e) {
 					error.style.display = 'block';
 					error.innerHTML = String(e);

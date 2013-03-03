@@ -9,7 +9,7 @@ describe('HTML5 Parser: HTML Generation', function() {
 					input:datetime\n\
 					input:radio\n\
 					input:url\n\
-			', {pretty:false})()).toBe([
+			', {pretty:false})).toBe([
 				'<!doctype html>',
 				'<div>',
 					'<a></a>',

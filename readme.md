@@ -142,8 +142,6 @@ This would become:
 
 ### How to use:
 
-Calling `parse()` returns a function which you should call to generate the HTML. Internally the actual SIML is only parsed once.
-
 #### Browser:
 
 ```html
@@ -153,7 +151,7 @@ Calling `parse()` returns a function which you should call to generate the HTML.
   	curly: false,  // [default=false] pass true if you're using curlies for hierarchy
   	pretty: false, // [default=true] Will give you pretty HTML
   	indent: '....' // [default='  '] Use custom indentation when pretty=true
-  })();
+  });
   // Generates:
   //   <a id="blah" class="foo">
   //   ....<span>

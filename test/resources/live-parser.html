@@ -104,17 +104,11 @@
 			<label for="curly" id="curly-label">
 				Using curlies? <input id="curly" type="checkbox" />
 			</label>
-			<div id="input">section
-    header > h1 'Hi there!'
-    p 'This is a demo of Siml'
-    p 'Try typing something...' 
-    p > small
-        '
-        Tip: Tick "Using curlies?" if you
-        wanna use css-like curly brackets
-        for nesting instead of magical
-        whitespace.
-        '</div>
+			<div id="input">
+section#a.b {
+	'something'
+}
+			</div>
 		</div>
 		<pre id="html"></pre>
 		<div id="out"></div>
@@ -144,14 +138,11 @@
 				var value = inputSession.getValue();
 				error.style.display = '';
 				error.innerHTML = '';
-				try {
-					var html = siml.angular.parse( value, {curly: !!curly.checked, indent:'  '} )();
-				} catch(e) {
-					error.style.display = 'block';
-					error.innerHTML = String(e);
-					window.console && console.warn && console.warn(String(e));
-					return;
-				}
+				var html = siml.angular.parse(value, {
+					curly: !!curly.checked,
+					pretty: true,
+					indent: '  '
+				});
 				output.innerHTML = html;
 				htmlOutput.innerHTML = '';
 				htmlOutput.appendChild( document.createTextNode(html) );

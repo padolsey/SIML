@@ -264,6 +264,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		defaultConfig: {
 			pretty: true,
 			curly: false,
+			codeMatcher: null, // e.g. /<%.+?%>/g
 			indent: DEFAULT_INDENTATION,
 			directives: {},
 			attributes: {},
@@ -282,6 +283,15 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				spec += '\n/*siml:curly=true*/';
 			}
 
+			if (singleRunConfig.codeMatcher) {
+
+				if (!singleRunConfig.curly) {
+					throw new Error('SIML: Template-logic code matching (using codeMatcher) cannot occur unless config:curly is true');
+				}
+
+				spec = this._tokenizeCode(spec, singleRunConfig.codeMatcher);
+			}
+
 			try {
 				spec = siml.PARSER.parse(spec);
 			} catch(e) {
@@ -292,20 +302,36 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				}
 			}
 
-			return function() {
+			var html = [];
 
-				var html = [];
+			for (var i = 0, l = spec.length; i < l; ++i) {
+				var type = spec[i][0];
+				html[i] = new Parser[type](
+					spec[i][1],
+					singleRunConfig
+				).html;
+			}
 
-				for (var i = 0, l = spec.length; i < l; ++i) {
-					var type = spec[i][0];
-					html[i] = new Parser[type](
-						spec[i][1],
-						singleRunConfig
-					).html;
-				}
+			return this._deTokenizeCode(
+				html.join(singleRunConfig.pretty ? '\n' : '')
+			);
+		},
 
-				return html.join(singleRunConfig.pretty ? '\n' : '');
-			};
+		_tokenizeCode: function(input, matcher) {
+			var codeTokens = this._codeTokens = [];
+			return input.replace(matcher, function($0) {
+				return '"____CODE_TOKEN_____' + (codeTokens.push($0) - 1) + '"';
+			});
+		},
+
+		_deTokenizeCode: function(input) {
+			if (!this._codeTokens) {
+				return input; // Code has not been tokenized.
+			}
+			var codeTokens = this._codeTokens;
+			return input.replace(/____CODE_TOKEN_____(\d+)/g, function(_, d) {
+				return codeTokens[d];
+			});
 		}
 
 	};

@@ -270,6 +270,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		defaultConfig: {
 			pretty: true,
 			curly: false,
+			codeMatcher: null, // e.g. /<%.+?%>/g
 			indent: DEFAULT_INDENTATION,
 			directives: {},
 			attributes: {},
@@ -288,6 +289,15 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				spec += '\n/*siml:curly=true*/';
 			}
 
+			if (singleRunConfig.codeMatcher) {
+
+				if (!singleRunConfig.curly) {
+					throw new Error('SIML: Template-logic code matching (using codeMatcher) cannot occur unless config:curly is true');
+				}
+
+				spec = this._tokenizeCode(spec, singleRunConfig.codeMatcher);
+			}
+
 			try {
 				spec = siml.PARSER.parse(spec);
 			} catch(e) {
@@ -298,20 +308,36 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				}
 			}
 
-			return function() {
+			var html = [];
 
-				var html = [];
+			for (var i = 0, l = spec.length; i < l; ++i) {
+				var type = spec[i][0];
+				html[i] = new Parser[type](
+					spec[i][1],
+					singleRunConfig
+				).html;
+			}
 
-				for (var i = 0, l = spec.length; i < l; ++i) {
-					var type = spec[i][0];
-					html[i] = new Parser[type](
-						spec[i][1],
-						singleRunConfig
-					).html;
-				}
+			return this._deTokenizeCode(
+				html.join(singleRunConfig.pretty ? '\n' : '')
+			);
+		},
 
-				return html.join(singleRunConfig.pretty ? '\n' : '');
-			};
+		_tokenizeCode: function(input, matcher) {
+			var codeTokens = this._codeTokens = [];
+			return input.replace(matcher, function($0) {
+				return '"____CODE_TOKEN_____' + (codeTokens.push($0) - 1) + '"';
+			});
+		},
+
+		_deTokenizeCode: function(input) {
+			if (!this._codeTokens) {
+				return input; // Code has not been tokenized.
+			}
+			var codeTokens = this._codeTokens;
+			return input.replace(/____CODE_TOKEN_____(\d+)/g, function(_, d) {
+				return codeTokens[d];
+			});
 		}
 
 	};
@@ -973,7 +999,28 @@ siml.PARSER = (function(){
             pos1 = clone(pos);
             result0 = parse_selector();
             if (result0 !== null) {
-              result1 = parse__();
+              result1 = [];
+              if (/^[s ]/.test(input.charAt(pos.offset))) {
+                result2 = input.charAt(pos.offset);
+                advance(pos, 1);
+              } else {
+                result2 = null;
+                if (reportFailures === 0) {
+                  matchFailed("[s ]");
+                }
+              }
+              while (result2 !== null) {
+                result1.push(result2);
+                if (/^[s ]/.test(input.charAt(pos.offset))) {
+                  result2 = input.charAt(pos.offset);
+                  advance(pos, 1);
+                } else {
+                  result2 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("[s ]");
+                  }
+                }
+              }
               if (result1 !== null) {
                 result2 = parse_string();
                 if (result2 !== null) {
@@ -1001,7 +1048,28 @@ siml.PARSER = (function(){
               pos1 = clone(pos);
               result0 = parse_selector();
               if (result0 !== null) {
-                result1 = parse__();
+                result1 = [];
+                if (/^[s ]/.test(input.charAt(pos.offset))) {
+                  result2 = input.charAt(pos.offset);
+                  advance(pos, 1);
+                } else {
+                  result2 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("[s ]");
+                  }
+                }
+                while (result2 !== null) {
+                  result1.push(result2);
+                  if (/^[s ]/.test(input.charAt(pos.offset))) {
+                    result2 = input.charAt(pos.offset);
+                    advance(pos, 1);
+                  } else {
+                    result2 = null;
+                    if (reportFailures === 0) {
+                      matchFailed("[s ]");
+                    }
+                  }
+                }
                 if (result1 !== null) {
                   result2 = parse_directive();
                   if (result2 !== null) {
@@ -2380,9 +2448,6 @@ siml.PARSER = (function(){
       
       		input = input.replace(/^(?:\s*\n)+/g, '');
       
-      		//var tabCharacter = input.match(/\n(\s)\s*\S|$/)[1];
-      		//var rTabCharacter = RegExp(tabCharacter + '|\\s', 'g');
-      
       		var cur;
       		var lvl = 0;
       		var lines = [];
@@ -2396,10 +2461,6 @@ siml.PARSER = (function(){
       
       			var indent = line.match(/^\s*/)[0]; 
       			var indentLevel = (indent.match(/\s/g)||[]).length;
-      
-      			if (indent.length !== indentLevel) {
-      				//throw new Error('Inconsistent tabbing on line')
-      			}
       
       			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
       

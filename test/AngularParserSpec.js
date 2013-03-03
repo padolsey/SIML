@@ -33,7 +33,7 @@ describe('Angular Parser: HTML Generation', function() {
 				        model( todo.title )\n\
 				        $todoBlur( doneEditing(todo) )\n\
 				        $todoFocus( todo == editedTodo )\n\
-			', {pretty:false})()).toBe([
+			', {pretty:false})).toBe([
 				'<section id="main" ng-cloak ng-show="todos.length">',
 					'<input id="toggle-all" type="checkbox" ng-model="allChecked" ng-click="markAll(allChecked)"/>',
 					'<label for="toggle-all">Mark all as complete</label>',
