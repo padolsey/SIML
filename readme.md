@@ -133,7 +133,7 @@ This would become:
 
 ### How to use:
 
-Browser:
+#### Browser:
 
 ```html
 <script src="dist/siml.min.js"></script>
@@ -152,11 +152,15 @@ Browser:
 </script>
 ```
 
-Node:
+#### Node:
+
+```
+npm install siml
+```
 
 ```js
-var siml = require('./siml.html5.js'); // npm module will come later...
-siml.html5.parse('...'); //...
+var siml = require('siml');
+siml.html5.parse('input:checkbox')(); // => '<input type="checkbox" />'
 ```
 
 More to come...
