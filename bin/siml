@@ -5,7 +5,7 @@ var fs = require('fs');
 var program = require('commander');
 
 program
-	.version('0.1.1')
+	.version('0.1.2')
 	.usage('[options] [file]')
 	.option('-m, --mode <str>', '"default" or "angular"');
 
@@ -25,5 +25,5 @@ if (program.mode && program.mode !== 'default') {
 }
 
 process.stdout.write(
-	parser.parse( fs.readFileSync(program.args[0], 'utf8') )().html + '\n'
+	parser.parse( fs.readFileSync(program.args[0], 'utf8') ) + '\n'
 );
