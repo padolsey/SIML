@@ -46,7 +46,12 @@
 		var lvl = 0;
 		var lines = [];
 		var step = null;
-		input = input.split(/[\r\n]+/).forEach(function(line,i,all) {
+
+		input = input.split(/[\r\n]+/);
+
+		for (var i = 0, l = input.length; i < l; ++i) {
+
+			var line = input[i];
 
 			var indent = line.match(/^\s*/)[0]; 
 			var indentLevel = (indent.match(/\s/g)||[]).length;
@@ -55,26 +60,29 @@
 				//throw new Error('Inconsistent tabbing on line')
 			}
 
-			var nextIndentLevel = ((all[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
+			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
 
 			if (step == null) {
 				step = nextIndentLevel - indentLevel;
 			}
 
 			if (/^\s+$/.test(line)) {
-				return lines.push(line);
+				lines.push(line);
+				continue;
 			}
 
 			// Test for a non selector at start of line:
 			if (!/^\s*[A-Za-z0-9-_#.]+\s*(?:>\s*[A-Za-z0-9-_#.]+)*/.test(line)) {
 				cur = indentLevel;
 				// Exit, we're not interested in attributes, directives [anything that's not a selector]
-				return lines.push(line);
+				lines.push(line);
+				continue;
 			}
 
 			// Don't seek to add curlies to places where curlies already exist:
 			if (/[{}]\s*$/.test(line)) {
-				return lines.push(line);
+				lines.push(line);
+				continue;
 			}
 
 			line = line.substring(indent.length);
@@ -94,11 +102,14 @@
 			if (nextIndentLevel > indentLevel) { // indent
 				lvl++; 
 				lines.push(indent + line + '{');
-			} else lines.push(indent+line);
+			} else {
+				lines.push(indent+line);
+			}
 
 			cur = indentLevel;  
 			 
-		});
+		}
+
 		input = lines.join('\n'); //{ // make curlies BALANCE for peg!
 		input += Array(lvl+1).join('}');
 	}());
