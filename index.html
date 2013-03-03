@@ -33,12 +33,7 @@
 
 	<div id="tryout">
 		<textarea id="in">
-a {
-	foo: 123
-		b {
-		span
-	}
-}
+a.foo#blah{span "ok"}
 		</textarea>
 		<pre id="html"></pre>
 		<div id="out"></div>
@@ -64,7 +59,7 @@ a {
 			}
 			lastVal = ta.value;
 			//try {
-				var html = siml.angularParser.parse( ta.value, {curly:false} )();
+				var html = siml.angularParser.parse( ta.value, {curly:false, indent:'1234'} )();
 				output.innerHTML = html;
 				htmlOutput.innerHTML = '';
 				htmlOutput.appendChild( document.createTextNode(html) );

@@ -48,7 +48,19 @@ That'll give us:
 </section>
 ```
 
-Siml gives you the expressive power of CSS selectors. You're mostly writing CSS, except instead of declaring styles you're declaring markup, and you're free to build a hierarchy with indentation or curlies:
+Siml gives you the expressive power of CSS selectors. You're mostly writing CSS, except instead of declaring styles you're declaring markup.
+
+The basic components of Siml are Selectors, Attributes, Text and Directives. 
+
+```css
+section {          // Selector
+  class: body      // Attribute
+  ' foo blah '     // Internal `_fillText` Directive
+  text: 'foo'      // Custom Text Attribute
+}
+```
+
+You're free to build a hierarchy with indentation or curlies:
 
 ```js
 section.contact > form
@@ -126,7 +138,17 @@ Browser:
 ```html
 <script src="dist/siml.min.js"></script>
 <script>
-  siml.parse('a.foo#blah{span "ok"}')(); // => <a id="blah" class="foo"><span>ok</span></a>
+  siml.parse('a.foo#blah{span "ok"}', {
+  	curly: false,  // [default=false] pass true if you're using curlies for hierarchy
+  	pretty: false, // [default=true] Will give you pretty HTML
+  	indent: '....' // [default='  '] Use custom indentation when pretty=true
+  })();
+  // Generates:
+  //   <a id="blah" class="foo">
+  //   ....<span>
+  //   ........ok
+  //   ....</span>
+  //   </a>
 </script>
 ```
 
