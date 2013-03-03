@@ -4,7 +4,9 @@ Siml is the Simplified Markup Language. **[Try it out!](http://padolsey.github.c
 
 ### What is it?
 
-On the surface, Siml is a utility that turns CSS selectors into HTML:
+Siml allows you to write HTML/XML with more ease and less cruft.
+
+You can specify your elements by CSS selectors:
 
 ```html
 div           -> <div></div>
@@ -14,43 +16,41 @@ em > span     -> <em><span></span></em>
 em 'Ok then'  -> <em>Ok then</em>
 ```
 
-Siml also supports nesting with curlies:
+Siml allows nesting with curlies, just like [Sassy CSS](http://sass-lang.com/):
 
 ```css
 section.body {
-  h1 {
+  h1#title {
     'Title'
   }
 }
 ```
 
-Or significant whitespace:
+Or significant whitespace (i.e. *indent to nest*):
 
 ```text
 section.body
-  h1
+  h1#title
     'Title'
 ```
 
 Hell, we can do better than that:
 
 ```text
-section.body > h1 'Title'
+section.body > h1#title 'Title'
 ```
 
 That'll give us:
 
 ```html
 <section class="body">
-  <h1>
+  <h1 id="title">
     Title
   </h1>
 </section>
 ```
 
-Siml gives you the expressive power of CSS selectors. You're mostly writing CSS, except instead of declaring styles you're declaring markup.
-
-The basic components of Siml are Selectors, Attributes, Text and Directives. 
+Siml gives you the expressive power of CSS selectors. It also supports Attributes, Text and Directives. 
 
 ```css
 section {          // Selector
@@ -60,7 +60,9 @@ section {          // Selector
 }
 ```
 
-You're free to build a hierarchy with indentation or curlies:
+*Note: You can extend Siml to support your own attributes, directives and psuedo-classes. E.g. See [parsers/angular.js](https://github.com/padolsey/siml/blob/master/src/parsers/angular.js)*
+
+Siml allows you to express more with less effort and a cleaner form:
 
 ```js
 section.contact > form
@@ -78,7 +80,7 @@ section.contact > form
   input:submit 'Submit form...'
 ```
 
-That gives you:
+That would give you:
 
 ```html
 <section class="contact">
@@ -109,7 +111,7 @@ Siml allows you to make your own Siml parser by configuring:
 
 This means, with a bit of configuration, you can write custom markup for your bespoke need. E.g.
 
-*(Using dist/siml.angular.js, example from https://github.com/addyosmani/todomvc)*
+*This uses the [angular parser](https://github.com/padolsey/siml/blob/master/src/parsers/angular.js) which converts directives and undefined pseudo-classes to `ng-` attributes.*
 
 ```js
 ul#todo-list > li
@@ -131,12 +133,21 @@ This would become:
 </ul>
 ```
 
+### Distributions
+
+ * `dist/siml.js`: This is the default parser. No fancy stuff. Not even `input:checkbox` support.
+ * `dist/siml.html5.js`: For now, this includes small things like `doctype()` support and `input:type` suppport.
+ * `dist/siml.angular.js`: This is the angular parser, which makes it easier to write `ng-...` attributes with directives/pseudo-classes. ([Example here](https://github.com/padolsey/siml/blob/master/test/resources/angular-test.siml)). *Currently also includes `input:type` support*.
+ * `dist/siml.all.js`: This includes html5 and angular.
+
 ### How to use:
+
+Calling `parse()` returns a function which you should call to generate the HTML. Internally the actual Siml is only parsed once.
 
 #### Browser:
 
 ```html
-<script src="dist/siml.min.js"></script>
+<script src="dist/siml.all.min.js"></script>
 <script>
   siml.html5.parse('a.foo#blah{span "ok"}', {
   	curly: false,  // [default=false] pass true if you're using curlies for hierarchy
