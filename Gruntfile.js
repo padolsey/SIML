@@ -25,6 +25,17 @@ module.exports = function(grunt) {
 				],
 				dest: 'dist/siml.js'
 			},
+			all: {
+				src: [
+					'src/intro.js',
+					'src/siml.js',
+					'src/parsers/html5.js',
+					'src/parsers/angular.js',
+					'.grunt/siml_parser.js',
+					'src/outro.js'
+				],
+				dest: 'dist/siml.all.js'
+			},
 			angular: {
 				src: [
 					'src/intro.js',
@@ -57,6 +68,10 @@ module.exports = function(grunt) {
 				src: 'dist/siml.js',
 				dest: 'dist/siml.min.js'
 			},
+			all: {
+				src: 'dist/siml.all.js',
+				dest: 'dist/siml.all.min.js'
+			},
 			angular: {
 				src: 'dist/siml.angular.js',
 				dest: 'dist/siml.angular.min.js'
@@ -75,12 +90,13 @@ module.exports = function(grunt) {
 	grunt.registerTask('default', ['build']);
 	grunt.registerTask('test', ['jasmine']);
 
-	grunt.registerTask('build', ['jasmine', 'buildParser', 'build:default', 'build:angular', 'build:html5'])
+	grunt.registerTask('build', ['jasmine', 'buildParser', 'build:default', 'build:angular', 'build:html5', 'build:all']);
 
 	// Currently two built types -- Default and Angular (with Angular directives/attrs etc.)
 	grunt.registerTask('build:default', ['concat:default', 'uglify:default']);
 	grunt.registerTask('build:angular', ['concat:angular', 'uglify:angular']);
 	grunt.registerTask('build:html5', ['concat:html5', 'uglify:html5']);
+	grunt.registerTask('build:all', ['concat:all', 'uglify:all']);
 
 	grunt.registerTask('buildParser', function() {
 		var parserJS = 'siml.PARSER = ' + require('./vendor/peg.js').buildParser(fs.readFileSync('src/parser.pegjs', 'utf8'), {

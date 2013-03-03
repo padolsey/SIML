@@ -4,7 +4,7 @@
   "description": "siml, Simpified markup inspired by CSS",
   "version": "0.1.0",
   "author": "James Padolsey (http://git.io/padolsey)",
-  "main": "dist/siml.js",
+  "main": "dist/siml.all.js",
   "dependencies": {
     "commander": "0.6.1"
   },
