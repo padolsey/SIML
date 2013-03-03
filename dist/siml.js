@@ -1,6 +1,6 @@
 /**
- * Siml (c) James Padolsey 2013
- * http://github.com/padolsey/siml
+ * SIML (c) James Padolsey 2013
+ * http://github.com/padolsey/SIML
  */
 (function() {
 
@@ -292,9 +292,9 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				spec = siml.PARSER.parse(spec);
 			} catch(e) {
 				if (e.line !== undefined && e.column !== undefined) {
-					throw new SyntaxError('Siml: Line ' + e.line + ', column ' + e.column + ': ' + e.message);
+					throw new SyntaxError('SIML: Line ' + e.line + ', column ' + e.column + ': ' + e.message);
 				} else {
-					throw new SyntaxError('Siml: ' + e.message);
+					throw new SyntaxError('SIML: ' + e.message);
 				}
 			}
 
@@ -2315,7 +2315,12 @@ siml.PARSER = (function(){
       		var lvl = 0;
       		var lines = [];
       		var step = null;
-      		input = input.split(/[\r\n]+/).forEach(function(line,i,all) {
+      
+      		input = input.split(/[\r\n]+/);
+      
+      		for (var i = 0, l = input.length; i < l; ++i) {
+      
+      			var line = input[i];
       
       			var indent = line.match(/^\s*/)[0]; 
       			var indentLevel = (indent.match(/\s/g)||[]).length;
@@ -2324,26 +2329,29 @@ siml.PARSER = (function(){
       				//throw new Error('Inconsistent tabbing on line')
       			}
       
-      			var nextIndentLevel = ((all[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
+      			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
       
       			if (step == null) {
       				step = nextIndentLevel - indentLevel;
       			}
       
       			if (/^\s+$/.test(line)) {
-      				return lines.push(line);
+      				lines.push(line);
+      				continue;
       			}
       
       			// Test for a non selector at start of line:
       			if (!/^\s*[A-Za-z0-9-_#.]+\s*(?:>\s*[A-Za-z0-9-_#.]+)*/.test(line)) {
       				cur = indentLevel;
       				// Exit, we're not interested in attributes, directives [anything that's not a selector]
-      				return lines.push(line);
+      				lines.push(line);
+      				continue;
       			}
       
       			// Don't seek to add curlies to places where curlies already exist:
       			if (/[{}]\s*$/.test(line)) {
-      				return lines.push(line);
+      				lines.push(line);
+      				continue;
       			}
       
       			line = line.substring(indent.length);
@@ -2363,11 +2371,14 @@ siml.PARSER = (function(){
       			if (nextIndentLevel > indentLevel) { // indent
       				lvl++; 
       				lines.push(indent + line + '{');
-      			} else lines.push(indent+line);
+      			} else {
+      				lines.push(indent+line);
+      			}
       
       			cur = indentLevel;  
       			 
-      		});
+      		}
+      
       		input = lines.join('\n'); //{ // make curlies BALANCE for peg!
       		input += Array(lvl+1).join('}');
       	}());

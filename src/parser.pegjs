@@ -1,4 +1,4 @@
-/* Siml parser [uses peg.js] */
+/* SIML parser [uses peg.js] */
 
 /**
  * Pre-processing of the string occurs BEFORE parsing: 

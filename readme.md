@@ -1,10 +1,10 @@
-# Siml
+# SIML
 
-Siml is the Simplified Markup Language. **[Try it out!](http://padolsey.github.com/siml/)**
+SIML is the Simplified Markup Language. **[Try it out!](http://padolsey.github.com/siml/)**
 
 ### What is it?
 
-Siml allows you to write HTML/XML with more ease and less cruft.
+SIML allows you to write HTML/XML with more ease and less cruft.
 
 You can specify your elements by CSS selectors:
 
@@ -16,7 +16,7 @@ em > span     -> <em><span></span></em>
 em 'Ok then'  -> <em>Ok then</em>
 ```
 
-Siml allows nesting with curlies, just like [Sassy CSS](http://sass-lang.com/):
+SIML allows nesting with curlies, just like [Sassy CSS](http://sass-lang.com/):
 
 ```css
 section.body {
@@ -50,7 +50,7 @@ That'll give us:
 </section>
 ```
 
-Siml gives you the expressive power of CSS selectors. It also supports Attributes, Text and Directives. 
+SIML gives you the expressive power of CSS selectors. It also supports Attributes, Text and Directives. 
 
 ```css
 section {          // Selector
@@ -60,9 +60,9 @@ section {          // Selector
 }
 ```
 
-*Note: You can extend Siml to support your own attributes, directives and psuedo-classes. E.g. See [parsers/angular.js](https://github.com/padolsey/siml/blob/master/src/parsers/angular.js)*
+*Note: You can extend SIML to support your own attributes, directives and psuedo-classes. E.g. See [parsers/angular.js](https://github.com/padolsey/siml/blob/master/src/parsers/angular.js)*
 
-Siml allows you to express more with less effort and a cleaner form:
+SIML allows you to express more with less effort and a cleaner form:
 
 ```js
 section.contact > form
@@ -101,9 +101,9 @@ That would give you:
 </section>
 ```
 
-### Siml's Extensibility
+### SIML's Extensibility
 
-Siml allows you to make your own Siml parser by configuring:
+SIML allows you to make your own SIML parser by configuring:
 
  * Attribute handlers
  * Directive handlers
@@ -142,7 +142,7 @@ This would become:
 
 ### How to use:
 
-Calling `parse()` returns a function which you should call to generate the HTML. Internally the actual Siml is only parsed once.
+Calling `parse()` returns a function which you should call to generate the HTML. Internally the actual SIML is only parsed once.
 
 #### Browser:
 

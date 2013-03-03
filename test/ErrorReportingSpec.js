@@ -6,7 +6,7 @@ describe('Error Reporting', function() {
 
 			expect(function() {
 				siml.parse('^');
-			}).toThrow('Siml: Line 1, column 1: Expected AttributeName, Directive, Element or String but "^" found.');
+			}).toThrow('SIML: Line 1, column 1: Expected AttributeName, Directive, Element or String but "^" found.');
 
 			expect(function() {
 				siml.parse('\
@@ -14,7 +14,7 @@ abc {\n\
 	;\n\
 }\n\
 				');
-			}).toThrow('Siml: Line 1, column 5: Expected ":", ";", AttributeName, Directive, Element or String but "{" found.');
+			}).toThrow('SIML: Line 1, column 5: Expected ":", ";", AttributeName, Directive, Element or String but "{" found.');
 
 
 // TODO: IMPROVE ERROR REPORTING

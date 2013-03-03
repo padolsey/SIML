@@ -60,7 +60,7 @@ module.exports = function(grunt) {
 		},
 		uglify: {
 			options: {
-				banner: '/** Siml (c) 2013 James padolsey, http://github.com/padolsey/siml **/\n',
+				banner: '/** SIML (c) 2013 James padolsey, http://github.com/padolsey/SIML **/\n',
 				compress: true,
 				mangle: true
 			},

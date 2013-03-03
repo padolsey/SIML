@@ -286,9 +286,9 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				spec = siml.PARSER.parse(spec);
 			} catch(e) {
 				if (e.line !== undefined && e.column !== undefined) {
-					throw new SyntaxError('Siml: Line ' + e.line + ', column ' + e.column + ': ' + e.message);
+					throw new SyntaxError('SIML: Line ' + e.line + ', column ' + e.column + ': ' + e.message);
 				} else {
-					throw new SyntaxError('Siml: ' + e.message);
+					throw new SyntaxError('SIML: ' + e.message);
 				}
 			}
 
