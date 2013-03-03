@@ -24,6 +24,7 @@ siml.angular = new siml.Parser({
 				if (this.parentElement.tag === 'input' && name in siml.html5.INPUT_TYPES) {
 					return 'type="' + name + '"';
 				}
+				// camelCase -> snake-case
 				return 'ng-' + name.replace(/([a-z])([A-Z])/g, function($0,$1,$2) {
 					return $1 + '-' + $2.toLowerCase();
 				});
