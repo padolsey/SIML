@@ -1,0 +1,30 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'C:\\Program Files\\nodejs\\\\node.exe',
+1 verbose cli   'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'init' ]
+2 info using npm@1.2.11
+3 info using node@v0.8.21
+4 verbose node symlink C:\Program Files\nodejs\\node.exe
+5 verbose read json C:\Users\James\Documents\My Dropbox\Code\projects\hp\package.json
+6 silly package data undefined
+7 info init written successfully
+8 error Error: canceled
+8 error     at Interface.<anonymous> (C:\Program Files\nodejs\node_modules\npm\node_modules\read\lib\read.js:65:13)
+8 error     at Interface.EventEmitter.emit (events.js:126:20)
+8 error     at Interface._ttyWrite (readline.js:607:16)
+8 error     at ReadStream.onkeypress (readline.js:97:10)
+8 error     at ReadStream.EventEmitter.emit (events.js:126:20)
+8 error     at emitKey (readline.js:1058:12)
+8 error     at ReadStream.onData (readline.js:807:7)
+8 error     at ReadStream.EventEmitter.emit (events.js:96:17)
+8 error     at TTY.onread (net.js:397:14)
+9 error If you need help, you may report this log at:
+9 error     <http://github.com/isaacs/npm/issues>
+9 error or email it to:
+9 error     <npm-@googlegroups.com>
+10 error System Windows_NT 6.1.7601
+11 error command "C:\\Program Files\\nodejs\\\\node.exe" "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "init"
+12 error cwd C:\Users\James\Documents\My Dropbox\Code\projects\hp
+13 error node -v v0.8.21
+14 error npm -v 1.2.11
+15 verbose exit [ 1, true ]

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>JH LAB</title>
+	<script src="../../vendor/jsDump.js"></script>
+	<script src="../../vendor/peg.js"></script>
+	<script src="../../src/siml.js"></script>
+	<style>
+		body {
+			white-space: pre;
+			font-family: terminal, consolas, monospace;
+		}
+	</style>
+</head>
+<body>
+
+	<script id="c" type=t>
+a b c
+
+	</script>
+
+	<script src="buildParser.js"></script>
+	<script>buildParser('../../src/parser.pegjs')</script>
+
+	<script>
+		var s = document.querySelector('#c').innerHTML;
+		document.body.innerHTML = jsDump.parse(
+			siml.PARSER.parse(s)
+		) ;
+	</script>
+
+</body>
+</html>

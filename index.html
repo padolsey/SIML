@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>D</title>
+	<style>
+		body { font-family: sans-serif; }
+		#tryout {
+			clear: both;
+		}
+		.title {
+			border-bottom: 1px solid #111;
+			padding: .3em 0;
+			margin: 0 0 10px 0;
+		}
+		#tryout > * {
+			float: left;
+			margin: 10px;
+			border: 3px solid #CCC;
+			padding: 10px;
+			font-size: .7em;
+			font-family: "Bitstream Vera Sans Mono", "Consolas", "Lucida Console", monospace, mono;
+			width: 320px;
+			height: 250px;
+			overflow: auto;
+		}
+		input {
+			width: 200px;
+		}
+	</style>
+</head>
+<body>
+
+	<div id="tryout">
+		<textarea id="in">
+a {
+	foo: 123
+		b {
+		span
+	}
+}
+		</textarea>
+		<pre id="html"></pre>
+		<div id="out"></div>
+	</div>
+
+	<script src="vendor/peg.js"></script>
+	<script src="src/siml.js"></script>
+	<script src="src/parsers/angular.js"></script>
+	<script src="test/resources/buildParser.js"></script>
+	<script>buildParser('src/parser.pegjs')</script>
+
+	<script>
+
+		var ta = document.getElementById('in');
+		var htmlOutput = document.getElementById('html');
+		var output = document.getElementById('out');
+
+		var lastVal;
+
+		ta.onchange = ta.onkeyup = function() {
+			if  (ta.value === lastVal) {
+				return;
+			}
+			lastVal = ta.value;
+			//try {
+				var html = siml.angularParser.parse( ta.value, {curly:false} )();
+				output.innerHTML = html;
+				htmlOutput.innerHTML = '';
+				htmlOutput.appendChild( document.createTextNode(html) );
+				//return;
+			//} catch(e) {
+			//	throw e;
+			//	console.error(e);
+			//};
+		};
+
+		ta.onchange();
+
+	</script>
+
+</body>
+</html>

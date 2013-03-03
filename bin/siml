@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+
+var siml = require('../dist/siml.all');
+var fs = require('fs');
+var program = require('commander');
+
+program
+	.version('0.1.0')
+	.usage('[options] [file]')
+	.option('-m, --mode <str>', '"default" or "angular"');
+
+program.parse(process.argv);
+
+var parser = siml.defaultParser;
+
+if (program.mode && program.mode !== 'default') {
+	switch (program.mode) {
+		case 'angular':
+			parser = siml.angularParser;
+		//...
+	}
+}
+
+process.stdout.write(
+	parser.parse( fs.readFileSync(program.args[0], 'utf8') )().html + '\n'
+);

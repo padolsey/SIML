@@ -1,0 +1,31 @@
+section#main:cloak
+  show( todos.length )
+
+  input#toggle-all:checkbox
+    model( allChecked )
+    click( markAll(allChecked) )
+  label[for=toggle-all] 'Mark all as complete'
+
+  ul#todo-list > li
+    repeat( todo in todos | filter:statusFilter )
+    class({
+      completed: todo.completed,
+      editing: todo == editedTodo
+    })
+
+    div.view
+      input.toggle:checkbox
+        model( todo.completed )
+        change( todoCompleted(todo) )
+      label
+        '{{todo.title}}'
+        dblclick( editTodo(todo) )
+      button.destroy
+        click( removeTodo(todo) )
+
+    form
+      submit( doneEditing(todo) )
+      input.edit
+        model( todo.title )
+        $todoBlur( doneEditing(todo) )
+        $todoFocus( todo == editedTodo )

@@ -1,0 +1,30 @@
+siml.angularParser = new siml.Parser({
+	pretty: true,
+	directives: {
+		_default: {
+			type: 'ATTR',
+			make: function(name, value) {
+				// camelCase -> snake-case
+				name = name.replace(/([a-z])([A-Z])/g, function($0,$1,$2) {
+					return $1 + '-' + $2.toLowerCase();
+				});
+				if (name.substring(0, 1) === '$') {
+					name = name.substring(1);
+				} else {
+					name = 'ng-' + name;
+				}
+				return name + '="' + siml.Parser.escapeHTML(value) + '"';
+			}
+		}
+	},
+	psuedos: {
+		_default: {
+			type: 'ATTR',
+			make: function(name) {
+				return 'ng-' + name.replace(/([a-z])([A-Z])/g, function($0,$1,$2) {
+					return $1 + '-' + $2.toLowerCase();
+				});
+			}
+		}
+	}
+});

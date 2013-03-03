@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>Siml JasmineSpecRunner</title>
+	<script src="vendor/peg.js"></script>
+	<script src="vendor/jquery.js"></script>
+	<script src="src/siml.js"></script>
+	<script src="src/parsers/angular.js"></script>
+	<script src="test/resources/buildParser.js"></script>
+	<script>buildParser('src/parser.pegjs')</script>
+</head>
+<body>
+	<% css.forEach(function(style){ %>
+	<link rel="stylesheet" type="text/css" href="<%= style %>">
+	<% }) %>
+	<script>console.log('STARTED VIA CUSTOM TEMPLATE');</script>
+	<script>window._console = console;</script>
+	<% with (scripts) { %>
+		<% [].concat(jasmine, vendor, helpers, specs, reporters, start).forEach(function(script){ %>
+			<script>console.log('LOADING::', '<%=script%>');</script>
+			<script src="<%= script %>"></script>
+		<% }) %>
+	<% }; %>
+</body>
+</html>
