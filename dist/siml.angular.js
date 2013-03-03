@@ -7,20 +7,14 @@
 var siml = typeof module != 'undefined' && module.exports ? module.exports : window.siml = {};
 (function() {
 
+	'use strict';
+
 	var DEFAULT_TAG = 'div';
 	var DEFAULT_INDENTATION = '  ';
 
 	var SINGULAR_TAGS = {
-		input: 1,
-		img: 1,
-		meta: 1,
-		link: 1,
-		br: 1,
-		hr: 1,
-		source: 1,
-		area: 1,
-		base: 1,
-		col: 1
+		input: 1, img: 1, meta: 1, link: 1, br: 1, hr: 1,
+		source: 1, area: 1, base: 1, col: 1
 	};
 
 	var DEFAULT_DIRECTIVES = {
@@ -61,13 +55,6 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 					return 'type="' + name + '"';
 				}
 				console.warn('Unknown psuedo class used:', name)
-			}
-		},
-		checkbox: {
-			type: 'ATTR',
-			make: function() {
-				this.parentElement.tag = 'input';
-				return 'type="checkbox"';
 			}
 		}
 	}
@@ -342,7 +329,44 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 }());
 
-siml.angularParser = new siml.Parser({
+(function() {
+
+	var INPUT_TYPES = {
+		button: 1, checkbox: 1, color: 1, date: 1, datetime: 1, 'datetime-local': 1,
+		email: 1, file: 1, hidden: 1, image: 1, month: 1, number: 1, password: 1, radio: 1,
+		range: 1, reset: 1, search: 1, submit: 1, tel: 1, text: 1, time: 1, url: 1, week: 1
+	};
+
+	siml.html5 = new siml.Parser({
+		pretty: true,
+		indent: '	',
+		directives: {
+			doctype: {
+				type: 'CONTENT',
+				make: function() {
+					return '<!doctype html>'
+				}
+			}
+		},
+		psuedos: {
+			_default: {
+				type: 'ATTR',
+				make: function(name) {
+					if (this.parentElement.tag === 'input' && name in INPUT_TYPES) {
+						return 'type="' + name + '"';
+					}
+					throw new Error('Unknown Pseduo: ' + name);
+				}
+			}
+		}
+	});
+
+	siml.html5.INPUT_TYPES = INPUT_TYPES;
+
+}());
+
+
+siml.angular = new siml.Parser({
 	pretty: true,
 	directives: {
 		_default: {
@@ -365,6 +389,9 @@ siml.angularParser = new siml.Parser({
 		_default: {
 			type: 'ATTR',
 			make: function(name) {
+				if (this.parentElement.tag === 'input' && name in siml.html5.INPUT_TYPES) {
+					return 'type="' + name + '"';
+				}
 				return 'ng-' + name.replace(/([a-z])([A-Z])/g, function($0,$1,$2) {
 					return $1 + '-' + $2.toLowerCase();
 				});

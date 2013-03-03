@@ -1,4 +1,4 @@
-siml.angularParser = new siml.Parser({
+siml.angular = new siml.Parser({
 	pretty: true,
 	directives: {
 		_default: {
@@ -21,6 +21,9 @@ siml.angularParser = new siml.Parser({
 		_default: {
 			type: 'ATTR',
 			make: function(name) {
+				if (this.parentElement.tag === 'input' && name in siml.html5.INPUT_TYPES) {
+					return 'type="' + name + '"';
+				}
 				return 'ng-' + name.replace(/([a-z])([A-Z])/g, function($0,$1,$2) {
 					return $1 + '-' + $2.toLowerCase();
 				});

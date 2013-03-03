@@ -138,7 +138,7 @@ Browser:
 ```html
 <script src="dist/siml.min.js"></script>
 <script>
-  siml.parse('a.foo#blah{span "ok"}', {
+  siml.html5.parse('a.foo#blah{span "ok"}', {
   	curly: false,  // [default=false] pass true if you're using curlies for hierarchy
   	pretty: false, // [default=true] Will give you pretty HTML
   	indent: '....' // [default='  '] Use custom indentation when pretty=true
@@ -155,8 +155,8 @@ Browser:
 Node:
 
 ```js
-var siml = require('./siml.js'); // npm module will come later...
-siml.parse('...'); //...
+var siml = require('./siml.html5.js'); // npm module will come later...
+siml.html5.parse('...'); //...
 ```
 
 More to come...

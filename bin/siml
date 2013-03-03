@@ -16,7 +16,10 @@ var parser = siml.defaultParser;
 if (program.mode && program.mode !== 'default') {
 	switch (program.mode) {
 		case 'angular':
-			parser = siml.angularParser;
+			parser = siml.angular;
+			break;
+		case 'html5':
+			parser = siml.html5;
 		//...
 	}
 }

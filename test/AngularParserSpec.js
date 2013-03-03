@@ -1,7 +1,7 @@
 describe('Angular Parser: HTML Generation', function() {
 	describe('Example case', function() {
 		it('Parses correctly', function() {
-			expect(siml.angularParser.parse('\
+			expect(siml.angular.parse('\
 				section#main:cloak\n\
 				  show( todos.length )\n\
 					\n\

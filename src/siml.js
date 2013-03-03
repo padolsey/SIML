@@ -1,20 +1,14 @@
 var siml = typeof module != 'undefined' && module.exports ? module.exports : window.siml = {};
 (function() {
 
+	'use strict';
+
 	var DEFAULT_TAG = 'div';
 	var DEFAULT_INDENTATION = '  ';
 
 	var SINGULAR_TAGS = {
-		input: 1,
-		img: 1,
-		meta: 1,
-		link: 1,
-		br: 1,
-		hr: 1,
-		source: 1,
-		area: 1,
-		base: 1,
-		col: 1
+		input: 1, img: 1, meta: 1, link: 1, br: 1, hr: 1,
+		source: 1, area: 1, base: 1, col: 1
 	};
 
 	var DEFAULT_DIRECTIVES = {
@@ -55,13 +49,6 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 					return 'type="' + name + '"';
 				}
 				console.warn('Unknown psuedo class used:', name)
-			}
-		},
-		checkbox: {
-			type: 'ATTR',
-			make: function() {
-				this.parentElement.tag = 'input';
-				return 'type="checkbox"';
 			}
 		}
 	}
