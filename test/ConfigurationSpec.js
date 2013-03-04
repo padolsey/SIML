@@ -97,4 +97,124 @@ describe('Configuration', function() {
 			].join(''));
 		});
 	});
+	describe('config:codeMatcher [Nested code]', function() {
+		describe('When template logic in the form <%...%> exists in input', function() {
+			it('Should retain it in the output', function() {
+				expect(siml.parse('\
+					body {\
+						<% for (var i in obj[foo]) { %>\
+							section.a {\
+								foo "Text"\
+							}\
+						<% } // end that %>\
+					}\
+				', {codeMatcher:'<%[\\s\\S]+?%>', curly: true, pretty: false})).toBe([
+					'<body>',
+						'<% for (var i in obj[foo]) { %>',
+							'<section class="a"><foo>Text</foo></section>',
+						'<% } // end that %>',
+					'</body>'
+				].join(''));
+			});
+		});
+		describe('Custom Template logic delimiters', function() {
+			var codeMatcher = '~:[\\s\\S]+?:~'; // template logic delimiters
+			describe('With curlies', function() {
+				it('Should retain template logic in the output', function() {
+					expect(siml.parse('\
+						section#a.b {\n\
+							~: for (var i = 0, l = this.fn().length; i < l; ++i) { :~\n\
+								header {\n\
+									h1 {\n\
+										~:\n\
+											data.title() || data.getRealTitle() ~~ \'LOL THIS CODE...\'\n\
+											;\n\
+											// Testing\n\
+											1,2,3({a,c,d});\n\
+										:~\n\
+						~:CodeAtWrongTab??:~\n\
+	~:CodeAtWrongTab??:~\n\
+									}\n\
+									h2 {\n\
+										id: \'a\'\n\
+										class: \'b foo d\'\n\
+									}\n\
+								}\n\
+							~: } :~\n\
+							~:/* This is just a comment */:~\n\
+							body ~:=TheBodyContent:~\n\
+						}\n\
+					', {codeMatcher:codeMatcher, curly: true, pretty: false})).toBe([
+						'<section id="a" class="b">',
+							'~: for (var i = 0, l = this.fn().length; i < l; ++i) { :~',
+								'<header>',
+									'<h1>',
+										'~:\n\
+											data.title() || data.getRealTitle() ~~ \'LOL THIS CODE...\'\n\
+											;\n\
+											// Testing\n\
+											1,2,3({a,c,d});\n\
+										:~',
+									'~:CodeAtWrongTab??:~',
+									'~:CodeAtWrongTab??:~',
+									'</h1>',
+									'<h2 id="a" class="b foo d"></h2>',
+								'</header>',
+							 '~: } :~',
+							'~:/* This is just a comment */:~',
+							'<body>',
+								'~:=TheBodyContent:~',
+							'</body>',
+						'</section>'
+					].join(''));
+				});
+			});
+			/*describe('With magical whitespace', function() {
+				it('Should retain template logic in the output', function() {
+					expect(siml.parse('\
+						section#a.b\n\
+							~: for (var i = 0, l = this.fn().length; i < l; ++i) { :~\n\
+								header\n\
+									h1\n\
+										~:\n\
+											data.title() || data.getRealTitle() ~~ \'LOL THIS CODE...\'\n\
+											;\n\
+											// Testing\n\
+											1,2,3({a,c,d});\n\
+										:~\n\
+						~:CodeAtWrongTab??:~\n\
+	~:CodeAtWrongTab??:~\n\
+									h2 \n\
+										id: \'a\'\n\
+										class: \'b foo d\'\n\
+							~: } :~\n\
+							~:...:~\n\
+							body ~:=TheBodyContent:~\n\
+					', {codeMatcher:codeMatcher, curly: false, pretty: false})).toBe([
+						'<section id="a" class="b">',
+							'~: for (var i = 0, l = this.fn().length; i < l; ++i) { :~',
+								'<header>',
+									'<h1>',
+										'~:\n\
+											data.title() || data.getRealTitle() ~~ \'LOL THIS CODE...\'\n\
+											;\n\
+											// Testing\n\
+											1,2,3({a,c,d});\n\
+										:~',
+									'~:CodeAtWrongTab??:~',
+									'~:CodeAtWrongTab??:~',
+									'</h1>',
+									'<h2 id="a" class="b foo d"></h2>',
+								'</header>',
+							 '~: } :~',
+							'~:...:~',
+							'<body>',
+								'~:=TheBodyContent:~',
+							'</body>',
+						'</section>'
+					].join(''));
+				});
+			});*/
+		});
+	});
 });

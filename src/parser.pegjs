@@ -128,6 +128,17 @@ children
 			return children;
 		}
 
+singleLineChildren
+	= all:([\t ]* child [\t ]* ";"?)* {
+			var children = [];
+			for (var i = 0; i < all.length; i++) {
+				var name = all[i][1][0];
+				var value = all[i][1][1];
+				children.push([name, value]);
+			}
+			return children;
+		}
+
 /**
  * CHILD TYPES
  */
@@ -153,15 +164,20 @@ child
  * Elements
  */
 element "Element"
-	= selector:selector _ "{" _ "}" _ { return [selector]; }
-	/ selector:selector _ "{" _ children:children _ "}" _ { return [selector, children]; }
-	/ selector:selector [\s ]* text:string { return [selector, [['Attribute', ['text', text]]]]; }
-	/ selector:selector [\s ]* directive:directive {
+	= selector:selector "{" _ "}" { return [selector]; }
+	/ selector:selector _ "{" _ children:children _ "}" { return [selector, children]; }
+	/ selector:selector [\t ]* text:string _ "{" _ children:children _ "}" {
+		children.unshift(['Attribute', ['text', text]]);
+		return [selector, children];
+	}
+	/ selector:selector [\t ]+ children:singleLineChildren { return [selector, children]; }
+	/ selector:selector [\t ]* text:string { return [selector, [['Attribute', ['text', text]]]]; }
+	/ selector:selector [\t ]* directive:directive {
 		return [ 
 			selector, [ ['Directive', directive] ]
 		]
 	}
-	/ selector:selector _ { return [selector]; }
+	/ selector:selector { return [selector]; }
 
 /**
  * Selector
@@ -181,7 +197,7 @@ singleSelector
 	// (It'll be abandoned via the predicate though)
 	= s:([^{}<>\n\t ]+ ' :'?) & { 
 		s = s[0].join('') + s[1];
-		return /^(?:[a-z0-9-_]|[#.][a-z0-9-_$]|\[(?:\[[^\[\]]*\]|['"][^'"]*['"]|[^\[\]'"]+)+\]|:[a-z0-9]+)+\s*$/i.test(s);
+		return /^(?:[a-z0-9-_]|[#.][a-z0-9-_$]|\[(?:\[[^\[\]]*\]|['"][^'"]*['"]|[^\[\]'"]+)+\]|:[a-z][a-z0-9]*)+\s*$/i.test(s);
 	} {
 		return s.join('');
 	}
@@ -193,10 +209,10 @@ directive "Directive"
 	= name:directiveName "(" ")" {
 		return [name];
 	}
-	/ name:directiveName "(" args:arrayElements ")" _ {
+	/ name:directiveName "(" args:arrayElements ")" {
 		return [name, args];
 	}
-	/ name:directiveName arg:braced _ {
+	/ name:directiveName arg:braced {
 		return [name, [arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')]];
 	}
 

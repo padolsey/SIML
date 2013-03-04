@@ -6,6 +6,10 @@
 	<script src="../../vendor/jsDump.js"></script>
 	<script src="../../vendor/peg.js"></script>
 	<script src="../../src/siml.js"></script>
+	<script src="../../src/parsers/html5.js"></script>
+	<script src="../../src/parsers/angular.js"></script>
+	<script src="buildParser.js"></script>
+	<script>buildParser('../../src/parser.pegjs')</script>
 	<style>
 		body {
 			white-space: pre;
@@ -16,16 +20,13 @@
 <body>
 
 	<script id="c" type=t>
-lab
+	abc
 	</script>
-
-	<script src="buildParser.js"></script>
-	<script>buildParser('../../src/parser.pegjs')</script>
 
 	<script>
 		var s = document.querySelector('#c').innerHTML;
 		document.body.innerHTML = jsDump.parse(
-			siml.PARSER.parse(s)
+			siml.parse(s, {codeMatcher: '~:[\\s\\S]+?:~'})
 		) ;
 	</script>
 

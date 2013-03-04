@@ -264,7 +264,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		defaultConfig: {
 			pretty: true,
 			curly: false,
-			codeMatcher: null, // e.g. /<%.+?%>/g
+			codeMatcher: null, // String (not RegExp) e.g. '<%.+?%>'
 			indent: DEFAULT_INDENTATION,
 			directives: {},
 			attributes: {},
@@ -286,7 +286,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			if (singleRunConfig.codeMatcher) {
 
 				if (!singleRunConfig.curly) {
-					throw new Error('SIML: Template-logic code matching (using codeMatcher) cannot occur unless config:curly is true');
+				//	throw new Error('SIML: Template-logic code matching (using codeMatcher) cannot occur unless config:curly is true');
 				}
 
 				spec = this._tokenizeCode(spec, singleRunConfig.codeMatcher);
@@ -319,7 +319,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		_tokenizeCode: function(input, matcher) {
 			var codeTokens = this._codeTokens = [];
-			return input.replace(matcher, function($0) {
+			return input.replace(RegExp(matcher, 'g'), function($0) {
 				return '"____CODE_TOKEN_____' + (codeTokens.push($0) - 1) + '"';
 			});
 		},
