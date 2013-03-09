@@ -21,6 +21,9 @@
   "directories": {
     "test": "test"
   },
+  "bin": {
+    "siml": "bin/siml"
+  },
   "scripts": {
     "test": "grunt test"
   },

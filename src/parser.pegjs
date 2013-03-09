@@ -173,7 +173,7 @@ element "Element"
 	= selector:selector _ "{" _ "}" { return [selector]; }
 	/ selector:selector _ "+" { return [selector]; }
 	/ selector:selector _ "{" _ children:children _ "}" { return [selector, children]; }
-	/ selectors:(selector [ \t>]+)+ _ "{" _ children:children _ "}" { console.log(selectors);
+	/ selectors:(selector [ \t>]+)+ _ "{" _ children:children _ "}" {
 		var cur;
 		var root = cur = [selectors.shift()[0], []];
 		for (var i = 0, l = selectors.length; i < l; ++i) {

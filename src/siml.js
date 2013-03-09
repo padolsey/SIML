@@ -80,8 +80,6 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			args = [].slice.call(args);
 			var dName = args[0];
 
-			console.log(dName, methodRepoName, config)
-
 			var propMaker = config[methodRepoName][dName] || fallbackMethodRepo[dName];
 			if (!propMaker) {
 				propMaker = config[methodRepoName]._default || fallbackMethodRepo._default;
