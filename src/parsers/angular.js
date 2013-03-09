@@ -22,7 +22,6 @@ siml.angular = new siml.Parser({
 		_default: {
 			type: 'ATTR',
 			make: function(name) {
-				console.log('PSEUDO ANGULAR', name)
 				if (this.parentElement.tag === 'input' && name in siml.html5.INPUT_TYPES) {
 					return 'type="' + name + '"';
 				}

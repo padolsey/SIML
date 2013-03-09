@@ -37,7 +37,7 @@
 	siml.html5 = new siml.Parser({
 		pretty: true,
 		indent: '	',
-		toTag: function(tag) {console.log('TO TAG');
+		toTag: function(tag) {
 			return HTML_SHORT_MAP[ tag ] || tag;
 		},
 		directives: {
