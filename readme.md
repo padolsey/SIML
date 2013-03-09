@@ -173,3 +173,7 @@ siml.html5.parse('input:checkbox')(); // => '<input type="checkbox" />'
 ```
 
 More to come...
+
+## CHANGELOG
+
+ * 0.2.0 Introduced single line macro-type selectors and quick-tags (vowelless) as part of the HTML5 parser, e.g. `html hd{meta[charset=utf-8]+title{'Cool'}}+bdy`

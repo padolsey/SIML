@@ -31,12 +31,16 @@ describe('DefaultParser: HTML Generation', function() {
 
 	describe('Attributes', function() {
 		it('Should be able to parse attributes in the form x:Number|String', function() {
-			expect('a{a:1}').toGenerate('<a a="1"></a>');
+			expect('a{a:1;}').toGenerate('<a a="1"></a>');
+			expect('a{a: 1}').toGenerate('<a a="1"></a>');
+			expect('a{a:"1"}').toGenerate('<a a="1"></a>');
+			expect('a{a: "1";}').toGenerate('<a a="1"></a>');
+			expect('a{a:1}').toGenerate('<a><a></a></a>'); // CONSIDERED A PSEUDO !! 
 			expect('\
 				section {\n\
 					a:y; // optional semi-colon (used for differentiating it from pseudo classes)\n\
-					b:2\n\
-					c:"9999" d:9847 href:\'http://foo.com\'\n\
+					b: 2\n\
+					c:"9999" d:9847; href:\'http://foo.com\'\n\
 				}\
 			').toGenerate('<section a="y" b="2" c="9999" d="9847" href="http://foo.com"></section>');
 		});
@@ -55,7 +59,7 @@ describe('DefaultParser: HTML Generation', function() {
 				expect('t#foo').toGenerate('<t id="foo"></t>');
 				expect('#foo').toGenerate('<div id="foo"></div>');
 				expect('t#foo.baz').toGenerate('<t id="foo" class="baz"></t>');
-				expect('t#foo#abc').toGenerate('<t id="foo"></t>'); // take FIRST
+				expect('t#foo#abc').toGenerate('<t id="abc"></t>'); // take MOST RECENT
 				expect('t.a.b.c.d#e').toGenerate('<t id="e" class="a b c d"></t>');
 			});
 		});
@@ -76,10 +80,10 @@ describe('DefaultParser: HTML Generation', function() {
 			expect('a{b{c{d{e{f{g{h{i}}}}}}}}').toGenerate('<a><b><c><d><e><f><g><h><i></i></h></g></f></e></d></c></b></a>');
 			expect('\
 				section {\
-					id: 123\
+					id: 123;\
 					header {\
 						h1 > em { text: "FooBar" }\
-						id : 456\
+						id : 456;\
 					}\
 					div.foo {\
 						span > a > strong { text: \'ok\' }\

@@ -138,7 +138,7 @@ section#a.b {
 				var value = inputSession.getValue();
 				error.style.display = '';
 				error.innerHTML = '';
-				var html = siml.angular.parse(value, {
+				var html = siml.html5.parse(value, {
 					curly: !!curly.checked,
 					pretty: true,
 					indent: '  '

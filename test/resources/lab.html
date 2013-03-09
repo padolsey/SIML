@@ -20,13 +20,22 @@
 <body>
 
 	<script id="c" type=t>
-	abc
+section {
+	id: 123;
+	header {
+		h1 > em { text: "FooBar" }
+		id : 456;
+	}
+	div.foo {
+		span > a > strong { text: 'ok' }
+	}
+}
 	</script>
 
 	<script>
 		var s = document.querySelector('#c').innerHTML;
 		document.body.innerHTML = jsDump.parse(
-			siml.parse(s, {codeMatcher: '~:[\\s\\S]+?:~'})
+			siml.PARSER.parse(s)
 		) ;
 	</script>
 

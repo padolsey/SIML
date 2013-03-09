@@ -48,20 +48,10 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				if (this.parentElement.tag === 'input') {
 					return 'type="' + name + '"';
 				}
-				console.warn('Unknown psuedo class used:', name)
+				console.warn('Unknown pseudo class used:', name)
 			}
 		}
 	}
-
-	/** 
-	 * THESE REGULAR EXPRESSIONS are from the Sizzle CSS Selector Engine
-	 *  (c) 2011, The Dojo Foundation
-	 */
-	var rATTR = /\[\s*((?:[\w\u00c0-\uFFFF\-]|\\.)+)\s*(?:(\S?=)\s*(?:(['"])(.*?)\3|(#?(?:[\w\u00c0-\uFFFF\-]|\\.)*)|)|)\s*\]/g;
-	var rID = /#((?:[\w\u00c0-\uFFFF_-]|\\.)+)|$/;
-	var rCLASS = /\.((?:[\w\u00c0-\uFFFF_-]|\\.)+)(?![^[\]]+])/g;
-	var rTAG = /^((?:[\w\u00c0-\uFFFF\*_-]|\\.)+)|$/;
-	var rPSEUDO = /:((?:[\w\u00c0-\uFFFF\-]|\\.)+)(?:\((['"]?)((?:\([^\)]+\)|[^\(\)]*)+)\2\))?/g;
 
 	function isArray(a) {
 		return {}.toString.call(a) === '[object Array]';
@@ -90,6 +80,8 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			args = [].slice.call(args);
 			var dName = args[0];
 
+			console.log(dName, methodRepoName, config)
+
 			var propMaker = config[methodRepoName][dName] || fallbackMethodRepo[dName];
 			if (!propMaker) {
 				propMaker = config[methodRepoName]._default || fallbackMethodRepo._default;
@@ -113,11 +105,20 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		this.indentation = indentation || '';
 		this.defaultIndentation = config.indent;
 
+		this.tag = null;
+		this.id = null;
+		this.attrs = [];
+		this.classes = [];
+		this.pseudos = [];
+
+		this.isSingular = false;
+		this.multiplier = 1;
+
 		this.isPretty = config.pretty;
 
-		this.output = [];
-		this.content = [];
-		this.attributes = [];
+		this.htmlOutput = [];
+		this.htmlContent = [];
+		this.htmlAttributes = [];
 
 		this.selector = spec[0];
 		this.children = spec[1] || [];
@@ -126,7 +127,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		this.processChildren();
 		this.collectOutput();
 
-		this.html = this.output.join('');
+		this.html = this.htmlOutput.join('');
 
 	}
 
@@ -135,44 +136,52 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		make: function() {
 
 			var selector = this.selector;
+			var selectorPortionType;
+			var selectorPortion;
 
-			var split = selector.split('>');
-
-			if (split.length > 1) {
-				selector = split.shift();
-				this.processElement(trim(split.join('>')), this.children);
-				this.children = [];
+			for (var i = 0, l = selector.length; i < l; ++i) {
+				selectorPortionType = selector[i][0];
+				selectorPortion = selector[i][1];
+				switch (selectorPortionType) {
+					case 'Tag':
+						this.tag = selectorPortion; break;
+					case 'Id':
+						this.id = selectorPortion; break;
+					case 'Attr':
+						this.attrs.push(selectorPortion); break;
+					case 'Class':
+						this.classes.push(selectorPortion); break;
+					case 'Pseudo':
+						this.pseudos.push(selectorPortion); break;
+				}
 			}
 
-			var tag = selector.match(rTAG)[1] || DEFAULT_TAG;
-			var classes = selector.match(rCLASS);
-			var id = selector.match(rID)[1];
-			var m;
+			this.tag = this.config.toTag.call(this, this.tag || DEFAULT_TAG);
+			this.isSingular = this.tag in SINGULAR_TAGS;
 
-			this.tag = tag;
-			this.isSingular = tag in SINGULAR_TAGS;
-
-			if (id) {
-				this.attributes.push(
-					'id="' + id + '"'
+			if (this.id) {
+				this.htmlAttributes.push(
+					'id="' + this.id + '"'
 				);
 			}
 
-			if (classes) {
-				this.attributes.push(
-					'class="' + classes.join(' ').replace(/(^| )\./g,	'$1') + '"'
+			if (this.classes.length) {
+				this.htmlAttributes.push(
+					'class="' + this.classes.join(' ').replace(/(^| )\./g,	'$1') + '"'
 				);
 			}
 
-			rATTR.lastIndex = 0;
-			rPSEUDO.lastIndex = 0;
-
-			while (m = rATTR.exec(selector)) {
-				this.processProperty('Attribute', [m[1], m[5] || m[4]]);
+			for (var i = 0, l = this.attrs.length; i < l; ++ i) {
+				this.processProperty('Attribute', this.attrs[i]);
 			}
 
-			while (m = rPSEUDO.exec(selector)) {
-				this.processProperty('Pseudo', [m[1], m[3]]);
+			for (var i = 0, l = this.pseudos.length; i < l; ++ i) {
+				var p = this.pseudos[i];
+				if (!isNaN(p[0])) {
+					this.multiplier = p[0];
+					continue;
+				}
+				this.processProperty('Pseudo', p);
 			}
 
 		},
@@ -181,9 +190,9 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 			var indent = this.indentation;
 			var isPretty = this.isPretty;
-			var output = this.output;
-			var attrs = this.attributes;
-			var content = this.content;
+			var output = this.htmlOutput;
+			var attrs = this.htmlAttributes;
+			var content = this.htmlContent;
 
 			output.push(indent + '<' + this.tag);
 			output.push(attrs.length ? ' ' + attrs.join(' ') : '');
@@ -203,6 +212,14 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 			output.push('</' + this.tag + '>');
 
+			if (this.multiplier > 1) {
+				var all = output.join('');
+				for (var m = this.multiplier - 1; m--;) {
+					output.push(isPretty ? '\n' : '');
+					output.push(all);
+				}
+			}
+
 		},
 
 		processChildren: function() {
@@ -217,7 +234,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			}
 		},
 		processElement: function(selector, children) {
-			this.content.push(
+			this.htmlContent.push(
 				new Parser.Element(
 					[selector, children],
 					this.config,
@@ -227,20 +244,22 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			);
 		},
 		processProperty: function(type, args) {
-			// type = Attribute | Directive | Psuedo
+			// type = Attribute | Directive | Pseudo
 			var property = new Parser[type](
 				args,
 				this.config,
 				this,
 				this.indentation + this.defaultIndentation
 			);
-			switch (property.type) {
-				case 'ATTR':
-					this.attributes.push(property.html);
-					break;
-				case 'CONTENT':
-					this.content.push(this.indentation + this.defaultIndentation + property.html);
-					break;
+			if (property.html) {
+				switch (property.type) {
+					case 'ATTR':
+						this.htmlAttributes.push(property.html);
+						break;
+					case 'CONTENT':
+						this.htmlContent.push(this.indentation + this.defaultIndentation + property.html);
+						break;
+				}
 			}
 		}
 	};
@@ -257,7 +276,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 	Parser.Attribute = ConfigurablePropertyFactory('attributes', DEFAULT_ATTRIBUTES);
 	Parser.Directive = ConfigurablePropertyFactory('directives', DEFAULT_DIRECTIVES);
-	Parser.Pseudo = ConfigurablePropertyFactory('psuedos', DEFAULT_PSEUDOS);
+	Parser.Pseudo = ConfigurablePropertyFactory('pseudos', DEFAULT_PSEUDOS);
 
 	Parser.prototype = {
 
@@ -268,7 +287,10 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			indent: DEFAULT_INDENTATION,
 			directives: {},
 			attributes: {},
-			psuedos: {}
+			pseudos: {},
+			toTag: function(t) {
+				return t;
+			}
 		},
 
 		parse: function(spec, singleRunConfig) {

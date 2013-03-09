@@ -129,11 +129,11 @@ children
 		}
 
 singleLineChildren
-	= all:([\t ]* child [\t ]* ";"?)* {
+	= all:(child [\t ]* '+'? [\t ]*)+ {
 			var children = [];
 			for (var i = 0; i < all.length; i++) {
-				var name = all[i][1][0];
-				var value = all[i][1][1];
+				var name = all[i][0][0];
+				var value = all[i][0][1];
 				children.push([name, value]);
 			}
 			return children;
@@ -150,57 +150,101 @@ child
 	/ name:attributeName _ ":" _ value:value _ ";" {
 		return ['Attribute', [name, value]];
 	}
+	/ name:attributeName _ ":" _ value:string {
+		return ['Attribute', [name, value]];
+	}
+	/ name:attributeName _ ":" [ \t] value:value { // explicit space
+		return ['Attribute', [name, value]];
+	}
+	/ directive:directive {
+		return ['Directive', directive];
+	}
 	/ el:element {
 		return ['Element', el];
 	}
 	/ name:attributeName _ ":" _ value:value {
 		return ['Attribute', [name, value]];
 	}
-	/ directive:directive {
-		return ['Directive', directive];
-	}
 
 /**
  * Elements
  */
 element "Element"
-	= selector:selector "{" _ "}" { return [selector]; }
+	= selector:selector _ "{" _ "}" { return [selector]; }
+	/ selector:selector _ "+" { return [selector]; }
 	/ selector:selector _ "{" _ children:children _ "}" { return [selector, children]; }
+	/ selectors:(selector [ \t>]+)+ _ "{" _ children:children _ "}" { console.log(selectors);
+		var cur;
+		var root = cur = [selectors.shift()[0], []];
+		for (var i = 0, l = selectors.length; i < l; ++i) {
+			cur[1].push([
+				'Element', cur = [selectors[i][0], []]
+			]);
+		}
+		cur[1] = children;
+		return root;
+	}
 	/ selector:selector [\t ]* text:string _ "{" _ children:children _ "}" {
 		children.unshift(['Attribute', ['text', text]]);
 		return [selector, children];
 	}
-	/ selector:selector [\t ]+ children:singleLineChildren { return [selector, children]; }
-	/ selector:selector [\t ]* text:string { return [selector, [['Attribute', ['text', text]]]]; }
-	/ selector:selector [\t ]* directive:directive {
-		return [ 
-			selector, [ ['Directive', directive] ]
-		]
+	/ selector:selector [\t >]* c:singleLineChildren { return [selector, c]; }
+	/ selector:selector [\t ]* text:string [\t ]* el:element {
+		var children = [['Attribute', ['text', text]], ['Element', el]];
+		return [selector, children];
 	}
+	/ selector:selector [\t ]* text:string { return [selector, [['Attribute', ['text', text]]]]; }
 	/ selector:selector { return [selector]; }
 
 /**
  * Selector
  */
 selector "Selector"
-	// Allows direct-descendant combinators
-	= s:(singleSelector (_ ">" _ singleSelector)*) {
-		var selector = s.join('').replace(/,/g, '').replace(/____STRING_TOKEN_____[0-9]+/g, function($0) {
-			// Save as string -- wrap in dQuotes, and escape inner dQuotes
-			return '"' + resolveStringToken($0).replace(/\\"/g, '"').replace(/"/g, '\\"') + '"';
-		}).replace(/[\r\n]+/g,''); // Remove breaks from multiline ATTR strings. TODO: Is this really needed?
-		return selector;
-	}
+	= singleSelector
 
 singleSelector
-	// Checks for ' :' since this is a common attribute pattern that can otherwise be mistaken for a selector.
-	// (It'll be abandoned via the predicate though)
-	= s:([^{}<>\n\t ]+ ' :'?) & { 
-		s = s[0].join('') + s[1];
-		return /^(?:[a-z0-9-_]|[#.][a-z0-9-_$]|\[(?:\[[^\[\]]*\]|['"][^'"]*['"]|[^\[\]'"]+)+\]|:[a-z][a-z0-9]*)+\s*$/i.test(s);
-	} {
-		return s.join('');
+	= s:(selectorTag selectorRepeatableComponent*) {
+		s[1].unshift(s[0]);
+		return s[1];
 	}
+	/ s:selectorRepeatableComponent+ {
+		return s;
+	}
+
+selectorRepeatableComponent 
+	= selectorId
+	/ selectorClass
+	/ selectorPseudo
+	/ selectorAttr
+
+selectorTag
+	= t:[a-z0-9_-]i+ { return ['Tag', t.join('')]; }
+
+selectorId
+	= '#' t:[a-z0-9-_$]i+ { return ['Id', t.join('')]; }
+
+selectorClass
+	= '.' t:[a-z0-9-_$]i+ { return ['Class', t.join('')]; }
+
+selectorAttr
+	= '[' name:[^\[\]=]+ '=' value:selectorAttrValue? ']' {
+		return ['Attr', [name.join(''), value]];
+	}
+	/ '[' name:[^\[\]]+ ']' {
+		return ['Attr', [name.join('')]];
+	}
+
+selectorPseudo
+	= ':' !string t:[a-z0-9-_$]i+ arg:braced?  {
+		return ['Pseudo', [
+			t.join(''),
+			arg && arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')
+		]];
+	}
+
+selectorAttrValue
+	= v:string { return v; }
+	/ v:[^\[\]]+ { return v.join(''); }
 
 /**
  * Directives &  Attributes

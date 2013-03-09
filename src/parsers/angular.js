@@ -1,5 +1,6 @@
 siml.angular = new siml.Parser({
 	pretty: true,
+	toTag: siml.html5.config.toTag,
 	directives: {
 		_default: {
 			type: 'ATTR',
@@ -17,10 +18,11 @@ siml.angular = new siml.Parser({
 			}
 		}
 	},
-	psuedos: {
+	pseudos: {
 		_default: {
 			type: 'ATTR',
 			make: function(name) {
+				console.log('PSEUDO ANGULAR', name)
 				if (this.parentElement.tag === 'input' && name in siml.html5.INPUT_TYPES) {
 					return 'type="' + name + '"';
 				}
