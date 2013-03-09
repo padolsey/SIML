@@ -24,11 +24,6 @@ if (program.mode && program.mode !== 'default') {
 	}
 }
 
-if (process.stdin.fd) {
-	var size = fs.fstatSync(process.stdin.fd).size;
-	var buffer = size > 0 ? fs.readSync(process.stdin.fd, size)[0] : '';
-}
-
 process.stdout.write(
-	parser.parse( buffer || program.args[0] ) + '\n'
+	parser.parse( program.args[0] ) + '\n'
 );
