@@ -130,7 +130,7 @@ start
 	}
 
 children
-	= all:(_ child _ ";"?)* {
+	= all:(_ child _ ";"? '+'? _)* {
 			var children = [];
 			for (var i = 0; i < all.length; i++) {
 				var name = all[i][1][0];

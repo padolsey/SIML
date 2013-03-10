@@ -15,6 +15,7 @@ describe('DefaultParser: HTML Generation', function() {
 			expect('a+b{c} + d').toGenerate('<a></a><b><c></c></b><d></d>');
 			expect('a>b>c+d>e').toGenerate('<a><b><c></c><d><e></e></d></b></a>');
 			expect('a b c + d > p + x').toGenerate('<a><b><c></c><d><p></p><x></x></d></b></a>');
+			expect('f>s{"SIML"}+"is"+a').toGenerate('<f><s>SIML</s>is<a></a></f>');
 		});
 		describe('Descendant combinator', function() {
 			it('Should be able to handle them', function() {
