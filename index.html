@@ -23,7 +23,6 @@
 		}
 		#header {
 			height: 100px;
-			line-height: 100px;
 			background: #222;
 			text-align: center;
 			position: absolute;
@@ -33,7 +32,8 @@
 			z-index: 3;
 			font-size: .8em;
 		}
-		#header * {
+		#header h1, #header h1 a {
+			line-height: 100px;
 			color: #FFF;
 			margin: 0;
 			padding: 0;
@@ -60,7 +60,8 @@
 		}
 		#curly-label {
 			position: absolute;
-			right: 25px;
+			left: 10px;
+			bottom: 10px;
 			background: rgba(0,0,0,0.8);
 			color:  #FFF;
 			border-bottom-left-radius: 6px;
@@ -101,25 +102,49 @@
 
 	<div id="header">
 		<h1>Try out <a href="https://github.com/padolsey/SIML">SIML</a></h1>
+		<label for="curly" id="curly-label">
+			Using curlies? <small>[for nesting]</small> <input id="curly" type="checkbox" />
+		</label>
 	</div>
 
 	<div id="tryout">
 		<div id="input-container">
 			<div id="error"></div>
-			<label for="curly" id="curly-label">
-				Using curlies? <input id="curly" type="checkbox" />
-			</label>
-			<div id="input">section<br>
+			<div id="input">// SIML can do fancy-pants tabby HTML:<br>
+section<br>
     header > h1 'Hi there!'<br>
     p 'This is a demo of SIML'<br>
     p 'Try typing something...' <br>
     p > small<br>
         '<br>
         Tip: Tick "Using curlies?" if you<br>
-        wanna use css-like curly brackets<br>
-        for nesting instead of magical<br>
-        whitespace.<br>
-        '</div>
+        wanna force SIML to parse without paying<br>
+        attention to indentation level.<br>
+        '<br>
+<br>
+'' ////////////////////////////////////////////////////<br>
+hr ////////////////////////////////////////////////////<br>
+'' ////////////////////////////////////////////////////<br>
+<br>
+// SIML can do HTML that looks like CSS<br>
+form {<br>
+    fieldset {<br>
+        label {<br>
+            for: "your-name";<br>
+            text: "Enter something..."<br>
+        }<br>
+        input.something#your-name {<br>
+            placeholder: " something ";<br>
+        }<br>
+    }<br>
+}<br>
+<br>
+'' ////////////////////////////////////////////////////<br>
+hr ////////////////////////////////////////////////////<br>
+'' ////////////////////////////////////////////////////<br>
+<br>
+// SIML can do one-liners with vowelless quick tags:<br>
+ftr>strng{'SIML'}'is on '+a[href='//git.io/siml']'Github'</div>
 		</div>
 		<pre id="html"></pre>
 		<div id="out"></div>

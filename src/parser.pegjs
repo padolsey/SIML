@@ -10,12 +10,15 @@
 	// This is done to make comment-removal possible and safe.
 	var stringTokens = [];
 	function resolveStringToken(tok) {
-		return stringTokens[tok.substring('____STRING_TOKEN_____'.length)]
+		return stringTokens[tok.substring('%%__STRING_TOKEN___%%'.length)]
 	}
 	input = input.replace(/(["'])((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
-		return '____STRING_TOKEN_____' + (stringTokens.push(
+		return '%%__STRING_TOKEN___%%' + (stringTokens.push(
 			$2.replace(/\\'/g, '\'').replace(/\\"/g, '"')
 		) - 1);
+	});
+	input = input.replace(/(^|\n)\s*\\([^\n\r]+)/g, function($0, $1, $2) {
+		return $1 + '%%__STRING_TOKEN___%%' + (stringTokens.push($2) - 1);
 	});
 
 	var isCurly = /\/\*\s*siml:curly=true\s*\*\//i.test(input);
@@ -123,6 +126,10 @@ children
 			for (var i = 0; i < all.length; i++) {
 				var name = all[i][1][0];
 				var value = all[i][1][1];
+				if (name === 'Group') {
+					children.push.apply(children, value);
+					continue;
+				}
 				children.push([name, value]);
 			}
 			return children;
@@ -134,6 +141,10 @@ singleLineChildren
 			for (var i = 0; i < all.length; i++) {
 				var name = all[i][0][0];
 				var value = all[i][0][1];
+				if (name === 'Group') {
+					children.push.apply(children, value);
+					continue;
+				}
 				children.push([name, value]);
 			}
 			return children;
@@ -162,6 +173,20 @@ child
 	/ el:element {
 		return ['Element', el];
 	}
+	/ '(' first:element rest:(_ ',' _ element)+ ')' selectorChunk:(selectorRepeatableComponent)* _ '>'? _ sChildren:singleLineChildren? {
+		var els = [];
+		rest.unshift([,,,first]);
+		for (var el, i = 0, l = rest.length; i < l; ++i) {
+			els.push(['Element', el = rest[i][3]]);
+			if (sChildren) {
+				el[1].push.apply(el[1], sChildren);
+			}
+			if (selectorChunk) {
+				el[0].push.apply(el[0], selectorChunk);
+			}
+		}
+		return ['Group', els];
+	}
 	/ name:attributeName _ ":" _ value:value {
 		return ['Attribute', [name, value]];
 	}
@@ -170,10 +195,14 @@ child
  * Elements
  */
 element "Element"
-	= selector:selector _ "{" _ "}" { return [selector]; }
-	/ selector:selector _ "+" { return [selector]; }
-	/ selector:selector _ "{" _ children:children _ "}" { return [selector, children]; }
-	/ selectors:(selector [ \t>]+)+ _ "{" _ children:children _ "}" {
+	= selector:selector _ "{" _ "}" { return [selector, []]; }
+	/ selector:selector _ "+" { return [selector, []]; }
+	/ selector:selector _ "{" _ children:children _ "}" _ '+'? { return [selector, children]; }
+	/ selectors:(selector [ \t]* '>'? [ \t]*)+ _ "{" _ children:children _ "}" !(_ '+') {
+		// Ensure that 'a b {c} d' consider 'a b {c}' as one el definition
+		// and 'd' as another. Otherwise we get probs like a{b}d, with d
+		// being a child of b.
+		// BUT (notice the !'+') still allow a{b}+c{d} (a>b,c>d)
 		var cur;
 		var root = cur = [selectors.shift()[0], []];
 		for (var i = 0, l = selectors.length; i < l; ++i) {
@@ -194,7 +223,7 @@ element "Element"
 		return [selector, children];
 	}
 	/ selector:selector [\t ]* text:string { return [selector, [['Attribute', ['text', text]]]]; }
-	/ selector:selector { return [selector]; }
+	/ selector:selector { return [selector, []]; }
 
 /**
  * Selector
@@ -301,7 +330,7 @@ value
 /* ===== Lexical Elements ===== */
 
 string "String"
-	= '____STRING_TOKEN_____' d:[0-9]+ {
+	= '%%__STRING_TOKEN___%%' d:[0-9]+ {
 		return stringTokens[ d.join('') ];
 	}
 

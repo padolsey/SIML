@@ -8,12 +8,21 @@ describe('DefaultParser: HTML Generation', function() {
 		expect('a {id:1;href:"http://foo.com";target:"blah"}').toGenerate('<a id="1" href="http://foo.com" target="blah"></a>');
 	});
 
-	describe('Descendant combinator', function() {
-		it('Should be able to handle them', function() {
-			expect('a > b').toGenerate('<a><b></b></a>');
-			expect('a > b > c').toGenerate('<a><b><c></c></b></a>');
-			expect('a>b > c   >d').toGenerate('<a><b><c><d></d></c></b></a>');
-			expect('div > ul { li > a { href:"foo" }}').toGenerate('<div><ul><li><a href="foo"></a></li></ul></div>');
+	describe('Siblings & Descendants', function() {
+		it('Handles sibling+descendant combos correctly', function() {
+			expect('a>b{c}d').toGenerate('<a><b><c></c></b></a><d></d>');
+			expect('a:2{b>c}').toGenerate('<a><b><c></c></b></a><a><b><c></c></b></a>');
+			expect('a+b{c} + d').toGenerate('<a></a><b><c></c></b><d></d>');
+			expect('a>b>c+d>e').toGenerate('<a><b><c></c><d><e></e></d></b></a>');
+			expect('a b c + d > p + x').toGenerate('<a><b><c></c><d><p></p><x></x></d></b></a>');
+		});
+		describe('Descendant combinator', function() {
+			it('Should be able to handle them', function() {
+				expect('a > b').toGenerate('<a><b></b></a>');
+				expect('a > b > c').toGenerate('<a><b><c></c></b></a>');
+				expect('a>b > c   >d').toGenerate('<a><b><c><d></d></c></b></a>');
+				expect('div > ul { li > a { href:"foo" }}').toGenerate('<div><ul><li><a href="foo"></a></li></ul></div>');
+			});
 		});
 	});
 

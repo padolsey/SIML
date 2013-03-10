@@ -30,6 +30,9 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		_default: {
 			type: 'ATTR',
 			make: function(attrName, value) {
+				if (!value) {
+					return attrName;
+				}
 				return attrName + '="' + escapeHTML(value) + '"';
 			}
 		},
@@ -281,7 +284,6 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		defaultConfig: {
 			pretty: true,
 			curly: false,
-			codeMatcher: null, // String (not RegExp) e.g. '<%.+?%>'
 			indent: DEFAULT_INDENTATION,
 			directives: {},
 			attributes: {},
@@ -299,27 +301,21 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				singleRunConfig.indent = '';
 			}
 
-			if (singleRunConfig.curly) {
-				spec += '\n/*siml:curly=true*/';
-			}
-
-			if (singleRunConfig.codeMatcher) {
-
-				if (!singleRunConfig.curly) {
-				//	throw new Error('SIML: Template-logic code matching (using codeMatcher) cannot occur unless config:curly is true');
+			if (!/^[\s\n\r]+$/.test(spec)) {
+				if (singleRunConfig.curly) {
+					spec += '\n/*siml:curly=true*/';
 				}
-
-				spec = this._tokenizeCode(spec, singleRunConfig.codeMatcher);
-			}
-
-			try {
-				spec = siml.PARSER.parse(spec);
-			} catch(e) {
-				if (e.line !== undefined && e.column !== undefined) {
-					throw new SyntaxError('SIML: Line ' + e.line + ', column ' + e.column + ': ' + e.message);
-				} else {
-					throw new SyntaxError('SIML: ' + e.message);
+				try {
+					spec = siml.PARSER.parse(spec);
+				} catch(e) {
+					if (e.line !== undefined && e.column !== undefined) {
+						throw new SyntaxError('SIML: Line ' + e.line + ', column ' + e.column + ': ' + e.message);
+					} else {
+						throw new SyntaxError('SIML: ' + e.message);
+					}
 				}
+			} else {
+				spec = [];
 			}
 
 			var html = [];
@@ -332,26 +328,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				).html;
 			}
 
-			return this._deTokenizeCode(
-				html.join(singleRunConfig.pretty ? '\n' : '')
-			);
-		},
-
-		_tokenizeCode: function(input, matcher) {
-			var codeTokens = this._codeTokens = [];
-			return input.replace(RegExp(matcher, 'g'), function($0) {
-				return '"____CODE_TOKEN_____' + (codeTokens.push($0) - 1) + '"';
-			});
-		},
-
-		_deTokenizeCode: function(input) {
-			if (!this._codeTokens) {
-				return input; // Code has not been tokenized.
-			}
-			var codeTokens = this._codeTokens;
-			return input.replace(/____CODE_TOKEN_____(\d+)/g, function(_, d) {
-				return codeTokens[d];
-			});
+			return html.join(singleRunConfig.pretty ? '\n' : '')
 		}
 
 	};

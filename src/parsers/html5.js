@@ -34,6 +34,13 @@
 		}
 	});
 
+	var doctypeDirective = {
+		type: 'CONTENT',
+		make: function() {
+			return '<!doctype html>'
+		}
+	};
+
 	siml.html5 = new siml.Parser({
 		pretty: true,
 		indent: '	',
@@ -41,12 +48,8 @@
 			return HTML_SHORT_MAP[ tag ] || tag;
 		},
 		directives: {
-			doctype: {
-				type: 'CONTENT',
-				make: function() {
-					return '<!doctype html>'
-				}
-			}
+			doctype: doctypeDirective,
+			dt: doctypeDirective
 		},
 		pseudos: {
 			_default: {
