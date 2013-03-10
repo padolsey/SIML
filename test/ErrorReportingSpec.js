@@ -2,7 +2,8 @@ describe('Error Reporting', function() {
 	describe('When a syntax error occurs during parsing', function() {
 		it('Should throw the correct line and character number', function() {
 
-
+// TODO: IMPROVE ERROR REPORTING
+		/*
 
 			expect(function() {
 				siml.parse('^');
@@ -17,8 +18,7 @@ abc {\n\
 			}).toThrow('SIML: Line 1, column 5: Expected ":", ";", AttributeName, Directive, Element or String but "{" found.');
 
 
-// TODO: IMPROVE ERROR REPORTING
-		/*	expect(function() {
+	expect(function() {
 				siml.parse('\
 abc {\n\
 	// Just a comment\n\

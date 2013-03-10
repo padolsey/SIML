@@ -2,7 +2,7 @@
   "name": "siml",
   "title": "SIML",
   "description": "SIML, Simpified markup inspired by CSS",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "James Padolsey (http://git.io/padolsey)",
   "main": "dist/siml.all.js",
   "dependencies": {

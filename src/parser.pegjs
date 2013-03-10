@@ -6,6 +6,15 @@
  */
 {
 
+	var toString = {}.toString;
+	function deepCopyArray(arr) {
+		var out = [];
+		for (var i = 0, l = arr.length; i < l; ++i) {
+			out[i] = toString.call(arr[i]) === '[object Array]' ? deepCopyArray(arr[i]) : arr[i];
+		}
+		return out;
+	}
+
 	// Replace all strings with recoverable string tokens:
 	// This is done to make comment-removal possible and safe.
 	var stringTokens = [];
@@ -170,20 +179,11 @@ child
 	/ directive:directive {
 		return ['Directive', directive];
 	}
-	/ el:element {
-		return ['Element', el];
-	}
-	/ '(' first:element rest:(_ ',' _ element)+ ')' selectorChunk:(selectorRepeatableComponent)* _ '>'? _ sChildren:singleLineChildren? {
-		var els = [];
-		rest.unshift([,,,first]);
-		for (var el, i = 0, l = rest.length; i < l; ++i) {
-			els.push(['Element', el = rest[i][3]]);
-			if (sChildren) {
-				el[1].push.apply(el[1], sChildren);
-			}
-			if (selectorChunk) {
-				el[0].push.apply(el[0], selectorChunk);
-			}
+	/ els:groupedElement {
+		if (els[0] === 'Element') {
+			els = [ els ];
+		} else if (els[0] === 'Group') {
+			els = els[1];
 		}
 		return ['Group', els];
 	}
@@ -191,13 +191,68 @@ child
 		return ['Attribute', [name, value]];
 	}
 
+groupedElement "GroupedElement"
+	= '(' _ first:groupedElement rest:(_ ',' _ groupedElement)* _ ')' _ mergeSelector:selectorRepeatableComponent* mergeChildren:(elementRHSChildren/('>'? _ child))? {
+
+		function collectTargets(element) {
+			var targets = [];
+			var children = element[1][1];
+			for (var i = 0, l = children.length; i < l; ++i) {
+				var child = children[i];
+				if (child[0] === 'Element') {
+					targets.push( collectTargets(child) || child );
+				}
+			}
+			return targets.length ? targets : null;
+		}
+
+		var els = [];
+		rest.unshift([,,,first]);
+
+		var subjectChildren = [];
+
+		for (var el, elGroupChildren, firstEl, i = 0, l = rest.length; i < l; ++i) {
+
+			el = rest[i][3];
+
+			elGroupChildren = el[0] === 'Group' ? el[1] : [el];
+			firstEl = elGroupChildren[0];
+
+			for (var targets, e = elGroupChildren.length; e--;) {
+				targets = collectTargets(elGroupChildren[e]);
+				subjectChildren.push.apply(subjectChildren, targets || [elGroupChildren[e]]);
+			}
+			els.push.apply(els, elGroupChildren);
+
+		}
+
+		if (mergeChildren[2] && typeof mergeChildren[2][0] == 'string') { // Is From single-end-child expr
+			mergeChildren = mergeChildren[2];
+			mergeChildren = mergeChildren[0] == 'Group' ? mergeChildren[1] : [mergeChildren];
+		}
+
+		for (var s = subjectChildren.length; s--;) {
+			mergeChildren = deepCopyArray(mergeChildren);
+			//mergeSelector = deepCopyArray(mergeSelector); // TODO: is needed?
+			if (mergeSelector.length) {
+				subjectChildren[s][1][0].push.apply(subjectChildren[s][1][0], mergeSelector);
+			}
+			if (mergeChildren.length) {
+				subjectChildren[s][1][1].push.apply(subjectChildren[s][1][1], mergeChildren);
+			}
+		}
+
+		return ['Group', els];
+	}
+	/ el:element {
+		return ['Element', el];
+	}
+
 /**
  * Elements
  */
 element "Element"
-	= selector:selector _ "{" _ "}" { return [selector, []]; }
-	/ selector:selector _ "+" { return [selector, []]; }
-	/ selector:selector _ "{" _ children:children _ "}" _ '+'? { return [selector, children]; }
+	= selector:selector _ children:elementRHSChildren { return [selector, children]; }
 	/ selectors:(selector [ \t]* '>'? [ \t]*)+ _ "{" _ children:children _ "}" !(_ '+') {
 		// Ensure that 'a b {c} d' consider 'a b {c}' as one el definition
 		// and 'd' as another. Otherwise we get probs like a{b}d, with d
@@ -213,10 +268,6 @@ element "Element"
 		cur[1] = children;
 		return root;
 	}
-	/ selector:selector [\t ]* text:string _ "{" _ children:children _ "}" {
-		children.unshift(['Attribute', ['text', text]]);
-		return [selector, children];
-	}
 	/ selector:selector [\t >]* c:singleLineChildren { return [selector, c]; }
 	/ selector:selector [\t ]* text:string [\t ]* el:element {
 		var children = [['Attribute', ['text', text]], ['Element', el]];
@@ -224,6 +275,17 @@ element "Element"
 	}
 	/ selector:selector [\t ]* text:string { return [selector, [['Attribute', ['text', text]]]]; }
 	/ selector:selector { return [selector, []]; }
+
+elementRHSChildren
+	= "{" _ "}" { return []; }
+	/ "{" _ children:children _ "}" _ '+'? { return children; }
+	/ text:string _ "{" _ children:children _ "}" {
+		children.unshift(['Attribute', ['text', text]]);
+		return children;
+	}
+	/ '+' {
+		return [];
+	}
 
 /**
  * Selector
