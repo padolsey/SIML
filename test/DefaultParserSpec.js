@@ -10,7 +10,7 @@ describe('DefaultParser: HTML Generation', function() {
 
 	describe('Siblings & Descendants', function() {
 		it('Handles sibling+descendant combos correctly', function() {
-			expect('a>b{c}d').toGenerate('<a><b><c></c></b></a><d></d>');
+			expect('a>b{c}d').toGenerate('<a><b><c></c></b><d></d></a>');
 			expect('a:2{b>c}').toGenerate('<a><b><c></c></b></a><a><b><c></c></b></a>');
 			expect('a+b{c} + d').toGenerate('<a></a><b><c></c></b><d></d>');
 			expect('a>b>c+d>e').toGenerate('<a><b><c></c><d><e></e></d></b></a>');
@@ -35,7 +35,7 @@ describe('DefaultParser: HTML Generation', function() {
 			expect('foo { "Look: " span "HERE!" }').toGenerate('<foo>Look: <span>HERE!</span></foo>');
 			expect('foo { "Look: " span{} "HERE!" }').toGenerate('<foo>Look: <span></span>HERE!</foo>');
 			expect('a "b" c "d"').toGenerate('<a>b<c>d</c></a>');
-			expect('   a { _fillText("foo") _fillText("baz") "  " em }  ').toGenerate('<a>foobaz  <em></em></a>');
+			expect('   a { @_fillText("foo") @_fillText("baz") "  " em }  ').toGenerate('<a>foobaz  <em></em></a>');
 		});
 	});
 

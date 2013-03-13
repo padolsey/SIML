@@ -30,94 +30,12 @@
 		return $1 + '%%__STRING_TOKEN___%%' + (stringTokens.push($2) - 1);
 	});
 
-	var isCurly = /\/\*\s*siml:curly=true\s*\*\//i.test(input);
-
 	// Remove comments:
 	input = input.replace(/\/\*[\s\S]*?\*\//g, '');
 	input = input.replace(/\/\/.+?(?=[\r\n])/g, '');
 
-	(function() {
+	console.warn(input);
 
-		// Avoid magical whitespace if we're definitely using curlies:
-		if (isCurly) {
-			return;
-		}
-
-		// Here we impose hierarchical curlies on the basis of indentation
-		// This is used to make, e.g.
-		// a\n\tb
-		// into
-		// a{b}
-
-		input = input.replace(/^(?:\s*\n)+/g, '');
-
-		var cur;
-		var lvl = 0;
-		var lines = [];
-		var step = null;
-
-		input = input.split(/[\r\n]+/);
-
-		for (var i = 0, l = input.length; i < l; ++i) {
-
-			var line = input[i];
-
-			var indent = line.match(/^\s*/)[0]; 
-			var indentLevel = (indent.match(/\s/g)||[]).length;
-
-			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
-
-			if (step == null) {
-				step = nextIndentLevel - indentLevel;
-			}
-
-			if (/^\s+$/.test(line)) {
-				lines.push(line);
-				continue;
-			}
-
-			// Test for a non selector at start of line:
-			if (!/^\s*[A-Za-z0-9-_#.]+\s*(?:>\s*[A-Za-z0-9-_#.]+)*/.test(line)) {
-				cur = indentLevel;
-				// Exit, we're not interested in attributes, directives [anything that's not a selector]
-				lines.push(line);
-				continue;
-			}
-
-			// Don't seek to add curlies to places where curlies already exist:
-			if (/[{}]\s*$/.test(line)) {
-				lines.push(line);
-				continue;
-			}
-
-			line = line.substring(indent.length);
-
-			if (indentLevel < cur) { // dedent
-				var diff = cur - indentLevel;
-				while (1) {
-					diff -= step;
-					if (lvl === 0 || diff < 0) {
-						break;
-					}
-					lvl--;
-					lines[i-1] += '}';
-				}
-			}
-
-			if (nextIndentLevel > indentLevel) { // indent
-				lvl++; 
-				lines.push(indent + line + '{');
-			} else {
-				lines.push(indent+line);
-			}
-
-			cur = indentLevel;  
-			 
-		}
-
-		input = lines.join('\n'); //{ // make curlies BALANCE for peg!
-		input += Array(lvl+1).join('}');
-	}());
 } 
 
 /**
@@ -125,172 +43,97 @@
  */
 
 start
-	= children:children {
-		return children;
-	}
-
-children
-	= all:(_ child _ ";"? '+'? _)* {
-			var children = [];
-			for (var i = 0; i < all.length; i++) {
-				var name = all[i][1][0];
-				var value = all[i][1][1];
-				if (name === 'Group') {
-					children.push.apply(children, value);
-					continue;
-				}
-				children.push([name, value]);
-			}
-			return children;
-		}
-
-singleLineChildren
-	= all:(child [\t ]* '+'? [\t ]*)+ {
-			var children = [];
-			for (var i = 0; i < all.length; i++) {
-				var name = all[i][0][0];
-				var value = all[i][0][1];
-				if (name === 'Group') {
-					children.push.apply(children, value);
-					continue;
-				}
-				children.push([name, value]);
-			}
-			return children;
-		}
+	= MSeries
 
 /**
- * CHILD TYPES
+ * MSeries -- A multiline series of LSeries
  */
-
-child
-	= s:string {
-		return ['Directive', ['_fillText', s]];
-	}
-	/ name:attributeName _ ":" _ value:value _ ";" {
-		return ['Attribute', [name, value]];
-	}
-	/ name:attributeName _ ":" _ value:string {
-		return ['Attribute', [name, value]];
-	}
-	/ name:attributeName _ ":" [ \t] value:value { // explicit space
-		return ['Attribute', [name, value]];
-	}
-	/ directive:directive {
-		return ['Directive', directive];
-	}
-	/ els:groupedElement {
-		if (els[0] === 'Element') {
-			els = [ els ];
-		} else if (els[0] === 'Group') {
-			els = els[1];
+MSeries
+	= _ head:LSeries body:([\r\n] _ LSeries)* _ {
+		var all = [];
+		body.unshift([,,head]);
+		for (var i = 0, l = body.length; i < l; ++i) {
+			all.push( body[i][2] );
 		}
-		return ['Group', els];
-	}
-	/ name:attributeName _ ":" _ value:value {
-		return ['Attribute', [name, value]];
-	}
-
-groupedElement "GroupedElement"
-	= '(' _ first:groupedElement rest:(_ ',' _ groupedElement)* _ ')' _ mergeSelector:selectorRepeatableComponent* mergeChildren:(elementRHSChildren/('>'? _ child))? {
-
-		function collectTargets(element) {
-			var targets = [];
-			var children = element[1][1];
-			for (var i = 0, l = children.length; i < l; ++i) {
-				var child = children[i];
-				if (child[0] === 'Element') {
-					targets.push( collectTargets(child) || child );
-				}
-			}
-			return targets.length ? targets : null;
-		}
-
-		var els = [];
-		rest.unshift([,,,first]);
-
-		var subjectChildren = [];
-
-		for (var el, elGroupChildren, firstEl, i = 0, l = rest.length; i < l; ++i) {
-
-			el = rest[i][3];
-
-			elGroupChildren = el[0] === 'Group' ? el[1] : [el];
-			firstEl = elGroupChildren[0];
-
-			for (var targets, e = elGroupChildren.length; e--;) {
-				targets = collectTargets(elGroupChildren[e]);
-				subjectChildren.push.apply(subjectChildren, targets || [elGroupChildren[e]]);
-			}
-			els.push.apply(els, elGroupChildren);
-
-		}
-
-		if (mergeChildren[2] && typeof mergeChildren[2][0] == 'string') { // Is From single-end-child expr
-			mergeChildren = mergeChildren[2];
-			mergeChildren = mergeChildren[0] == 'Group' ? mergeChildren[1] : [mergeChildren];
-		}
-
-		for (var s = subjectChildren.length; s--;) {
-			mergeChildren = deepCopyArray(mergeChildren);
-			//mergeSelector = deepCopyArray(mergeSelector); // TODO: is needed?
-			if (mergeSelector.length) {
-				subjectChildren[s][1][0].push.apply(subjectChildren[s][1][0], mergeSelector);
-			}
-			if (mergeChildren.length) {
-				subjectChildren[s][1][1].push.apply(subjectChildren[s][1][1], mergeChildren);
-			}
-		}
-
-		return ['Group', els];
-	}
-	/ el:element {
-		return ['Element', el];
+		return ['IncGroup', all];
 	}
 
 /**
- * Elements
+ * LSeries --  A single line series of Singles
  */
-element "Element"
-	= selector:selector _ children:elementRHSChildren { return [selector, children]; }
-	/ selectors:(selector [ \t]* '>'? [ \t]*)+ _ "{" _ children:children _ "}" !(_ '+') {
-		// Ensure that 'a b {c} d' consider 'a b {c}' as one el definition
-		// and 'd' as another. Otherwise we get probs like a{b}d, with d
-		// being a child of b.
-		// BUT (notice the !'+') still allow a{b}+c{d} (a>b,c>d)
-		var cur;
-		var root = cur = [selectors.shift()[0], []];
-		for (var i = 0, l = selectors.length; i < l; ++i) {
-			cur[1].push([
-				'Element', cur = [selectors[i][0], []]
-			]);
-		}
-		cur[1] = children;
-		return root;
-	}
-	/ selector:selector [\t >]* c:singleLineChildren { return [selector, c]; }
-	/ selector:selector [\t ]* text:string [\t ]* el:element {
-		var children = [['Attribute', ['text', text]], ['Element', el]];
-		return [selector, children];
-	}
-	/ selector:selector [\t ]* text:string { return [selector, [['Attribute', ['text', text]]]]; }
-	/ selector:selector { return [selector, []]; }
+LSeries
+	= a:Single sep:[> \t+]* b:LSeries {
+		switch (a[0]) {
+			case 'Element': {
 
-elementRHSChildren
-	= "{" _ "}" { return []; }
-	/ "{" _ children:children _ "}" _ '+'? { return children; }
-	/ text:string _ "{" _ children:children _ "}" {
-		children.unshift(['Attribute', ['text', text]]);
-		return children;
+				if (a[1][2] && a[1][2].declared) {
+					sep = '+';
+				}
+
+				if (sep.indexOf('+') > -1) {
+					return ['IncGroup', [a,b]];
+				}
+
+				// a>b
+				if (a[0] === 'Element') {
+					a[1][1].push(b); 
+				} else if (a[0] === 'IncGroup' || a[0] === 'ExcGroup') {
+					a[1].push(b);
+				}
+
+				return a;
+			}
+			case 'Directive': {
+				return ['IncGroup', [a, b]];
+			}
+		}
+		console.warn(':::', a, b)
+		return 'ERROR';
 	}
-	/ '+' {
-		return [];
+	/ Single
+
+/**
+ * Single -- A single simple component, such as an Element or Attribute
+ */ 
+Single
+	= Attribute
+	/ '(' _ head:Single body:(_ '/' _ Single)* _ ')' sep:[> \t+]* tail:Single? {
+		var all = [];
+		body.unshift([,,,head]);
+		for (var i = 0, l = body.length; i < l; ++i) {
+			all.push(body[i][3]);
+		}
+		return ['ExcGroup', all, tail];
+	}
+	/ Element
+	/ Text
+	/ Directive
+
+
+/**
+ * Element
+ */
+Element
+	= s:Selector _ '{' m:MSeries '}' {
+		return ['Element', [
+			s,
+			[m],
+			{declared:1}
+		]]
+	}
+	/ s:Selector _ '{' _ '}' {
+		return ['Element',
+			[s, [], {declared:1}]
+		];
+	}
+	/ s:Selector {
+		return ['Element', [s, []]];
 	}
 
 /**
  * Selector
  */
-selector "Selector"
+Selector "Selector"
 	= singleSelector
 
 singleSelector
@@ -338,21 +181,52 @@ selectorAttrValue
 	/ v:[^\[\]]+ { return v.join(''); }
 
 /**
- * Directives &  Attributes
+ * Text
  */
-directive "Directive"
+Text
+	= s:string {
+		return ['Directive', ['_fillText', s]];
+	}
+
+/**
+ * Attribute
+ */
+Attribute
+	= name:attributeName _ ":" _ value:value _ ";" {
+		return ['Attribute', [name, value]];
+	}
+	/ name:attributeName _ ":" _ value:string {
+		return ['Attribute', [name, value]];
+	}
+	/ name:attributeName _ ":" [ \t] value:value { // explicit space
+		return ['Attribute', [name, value]];
+	}
+
+attributeName "AttributeName"
+	= name:[A-Za-z0-9-_]+ { return name.join(''); }
+	/ string
+
+/**
+ * Directive
+ */
+Directive "Directive"
 	= name:directiveName "(" ")" {
-		return [name];
+		return ['Directive', [name]];
 	}
 	/ name:directiveName "(" args:arrayElements ")" {
-		return [name, args];
+		return ['Directive', [name, args]];
 	}
 	/ name:directiveName arg:braced {
-		return [name, [arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')]];
+		return [
+			'Directive',
+			[name, [
+				arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')
+			]]
+		];
 	}
 
 directiveName "DirectiveName"
-	= a:[a-zA-Z_$] b:[a-zA-Z0-9$_]* { return a+b.join(''); }
+	= '@' a:[a-zA-Z_$] b:[a-zA-Z0-9$_]* { return a+b.join(''); }
 
 braced
   = "(" parts:(braced / nonBraceCharacter)* ")" {
@@ -364,10 +238,6 @@ nonBraceCharacters
 
 nonBraceCharacter
   = [^()]
-
-attributeName "AttributeName"
-	= name:[A-Za-z0-9-_]+ { return name.join(''); }
-	/ string
 
 
 /*** JSON-LIKE TYPES ***/

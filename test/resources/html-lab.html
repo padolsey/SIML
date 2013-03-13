@@ -21,10 +21,7 @@
 
 	<script id="c" type=t>
 
-
-a>'cv'>k j
-
-
+a>(x/y)>s
 
 	</script>
 
@@ -32,7 +29,10 @@ a>'cv'>k j
 		var s = document.querySelector('#c').innerHTML;
 		document.body.innerHTML = jsDump.parse(
 			siml.PARSER.parse(s)
-		) ;
+		) + '<br><br>= = = = = = = = = =<br><br>';
+		document.body.appendChild(document.createTextNode(
+			siml.parse(s)
+		));
 	</script>
 
 </body>

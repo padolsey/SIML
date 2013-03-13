@@ -122,10 +122,9 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		this.htmlAttributes = [];
 
 		this.selector = spec[0];
-		this.children = spec[1] || [];
 
 		this.make();
-		this.processChildren();
+		this.processChildren(spec[1]);
 		this.collectOutput();
 
 		this.html = this.htmlOutput.join('');
@@ -223,30 +222,81 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		},
 
-		processChildren: function() {
-			var children = this.children;
+		processChildren: function(children) {
+
+			var exclusives = null;
+
 			for (var i = 0, l = children.length; i < l; ++i) {
 				var type = children[i][0];
 				if (type === 'Element') {
-					this.processElement.apply(this, children[i][1]);
+					this.processElement(children[i][1]);
+				} else if (type === 'IncGroup') {
+					this.processIncGroup(children[i][1]);
+				} else if (type === 'ExcGroup') {
+					exclusives = children[i];
+					break;
 				} else {
 					this.processProperty(type, children[i][1]);
 				}
 			}
+
+			if (exclusives) {
+				this.htmlAttributes = [];
+				this.htmlContent = [];
+				this.collectOutput = function(){};
+				var html = [];
+				var tail = exclusives[2];
+				exclusives = exclusives[1];
+				for (var n = 0, nl = exclusives.length; n < nl; ++n) {
+					var newSpec = [ this.spec[0], this.spec[1].slice() ];
+					newSpec[1][i] = exclusives[n];
+					console.log('PROCESS EXC', exclusives[n], tail)
+					html.push(
+						new (this instanceof RootElement ? RootElement : Element)(
+							newSpec,
+							this.config,
+							this.parentElement,
+							this.indentation
+						).html
+					);
+					console.log('PROCESS EXC', this.htmlContent)
+				}
+				this.htmlOutput.push( html.join(this.isPretty ? '\n' : '') );
+			}
+
 		},
-		processElement: function(selector, children) {
+
+		processElement: function(spec) {
 			this.htmlContent.push(
 				new Parser.Element(
-					[selector, children],
+					spec,
 					this.config,
 					this,
 					this.indentation + this.defaultIndentation
 				).html
 			);
 		},
-		processProperty: function(type, args) {
+
+		processIncGroup: function(spec) {
+			this.processChildren(spec);
+		},
+
+		processExcGroup: function(spec) {
+			for (var i = 0, l = spec.length; i < l; ++i) {
+				var type = children[i][0];
+				if (type === 'Element') {
+					this.processElement(children[i][1]);
+				} else if (type === 'IncGroup') {
+					this.processIncGroup(children[i][1]);
+				} else {
+					this.processProperty(type, children[i][1], 'EXC_TOKEN');
+				}
+			}
+		},
+
+		processProperty: function(type, args, overrideHTML) {
 			// type = Attribute | Directive | Pseudo
-			var property = new Parser[type](
+			var property = new Parser.properties[type](
 				args,
 				this.config,
 				this,
@@ -255,14 +305,30 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			if (property.html) {
 				switch (property.type) {
 					case 'ATTR':
-						this.htmlAttributes.push(property.html);
+						this.htmlAttributes.push(overrideHTML || property.html);
 						break;
 					case 'CONTENT':
-						this.htmlContent.push(this.indentation + this.defaultIndentation + property.html);
+						this.htmlContent.push(overrideHTML || this.indentation + this.defaultIndentation + property.html);
 						break;
 				}
 			}
 		}
+	};
+
+	function RootElement() {
+		Element.apply(this, arguments);
+	}
+
+	RootElement.prototype = Object.create(Element.prototype);
+	RootElement.prototype.make = function(){
+		// RootElement is just an empty space
+	};
+	RootElement.prototype.collectOutput = function() {
+		this.htmlOutput = [this.htmlContent.join(this.isPretty ? '\n': '')];
+	};
+	RootElement.prototype.processChildren = function() {
+		this.defaultIndentation = '';
+		return Element.prototype.processChildren.apply(this, arguments);
 	};
 
 	function Parser(parserConfig) {
@@ -274,10 +340,13 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	Parser.isArray =  isArray;
 
 	Parser.Element = Element;
+	Parser.RootElement = RootElement;
 
-	Parser.Attribute = ConfigurablePropertyFactory('attributes', DEFAULT_ATTRIBUTES);
-	Parser.Directive = ConfigurablePropertyFactory('directives', DEFAULT_DIRECTIVES);
-	Parser.Pseudo = ConfigurablePropertyFactory('pseudos', DEFAULT_PSEUDOS);
+	Parser.properties = {
+		Attribute: ConfigurablePropertyFactory('attributes', DEFAULT_ATTRIBUTES),
+		Directive: ConfigurablePropertyFactory('directives', DEFAULT_DIRECTIVES),
+		Pseudo: ConfigurablePropertyFactory('pseudos', DEFAULT_PSEUDOS)
+	};
 
 	Parser.prototype = {
 
@@ -318,17 +387,10 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				spec = [];
 			}
 
-			var html = [];
-
-			for (var i = 0, l = spec.length; i < l; ++i) {
-				var type = spec[i][0];
-				html[i] = new Parser[type](
-					spec[i][1],
-					singleRunConfig
-				).html;
-			}
-
-			return html.join(singleRunConfig.pretty ? '\n' : '')
+			return new Parser.RootElement(
+				['RootElement', spec[1]],
+				singleRunConfig
+			).html;
 		}
 
 	};
