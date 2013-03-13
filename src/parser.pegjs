@@ -97,13 +97,17 @@ LSeries
  */ 
 Single
 	= Attribute
-	/ '(' _ head:Single body:(_ '/' _ Single)* _ ')' sep:[> \t+]* tail:Single? {
+	/ '(' _ head:LSeries body:(_ '/' _ LSeries)* _ ')' selector:selectorRepeatableComponent* sep:[> \t+]* tail:Single? {
 		var all = [];
 		body.unshift([,,,head]);
 		for (var i = 0, l = body.length; i < l; ++i) {
 			all.push(body[i][3]);
 		}
-		return ['ExcGroup', all, tail];
+		return ['ExcGroup', all, {
+			tailChild: tail,
+			tailSelector: selector,
+			tailChildType: sep.indexOf('+') > -1 ? 'sibling' : 'descendent'
+		}];
 	}
 	/ Element
 	/ Text

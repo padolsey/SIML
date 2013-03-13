@@ -222,9 +222,79 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		},
 
-		processChildren: function(children) {
+		_handleExcGroup: function(excGroup, specChildIndex) {
 
-			var exclusives = null;
+			this.htmlAttributes = [];
+			this.htmlContent = [];
+			this.collectOutput = function(){};
+			var html = [];
+			var tail = excGroup[2];
+
+				console.log( tail, attachTail(excGroup, tail), ':::', excGroup ); 
+
+			var exclusives = excGroup[1];
+
+			for (var n = 0, nl = exclusives.length; n < nl; ++n) {
+				var newSpec = [ this.spec[0], this.spec[1].slice() ];
+				newSpec[1][specChildIndex] = exclusives[n];
+				console.log('PROCESS EXC', exclusives[n], tail)
+				html.push(
+					new (this instanceof RootElement ? RootElement : Element)(
+						newSpec,
+						this.config,
+						this.parentElement,
+						this.indentation
+					).html
+				);
+				console.log('PROCESS EXC', this.htmlContent)
+			}
+
+			this.htmlOutput.push( html.join(this.isPretty ? '\n' : '') );
+
+			function attachTail(start, tail) {
+				var children = getChildren(start);
+
+				if (!children) { return false; }
+
+				if (!children.length) {
+					if (tail.tailSelector && start[0] === 'Element') {
+						start[1][0].push( tail.tailSelector );
+					}
+					if (tail.tailChild) {
+						children.push(tail.tailChild);
+					}
+					return true;
+				}
+
+				var hasAttached = false;
+
+				for (var i = 0, l = children.length; i < l; ++i) {
+					var child = children[i];
+					if (tail.tailChildType === 'sibling') {
+						var cChildren = getChildren(child);
+						if (!cChildren || !cChildren.length) {
+							// Add tailChild as sibling of child
+							children[i] = ['IncGroup', [
+								child,
+								tail.tailChild
+							]];
+						}
+						continue;
+					}
+					hasAttached = attachTail(child, tail);
+				}
+
+				return hasAttached;
+			}
+
+			function getChildren(child) {
+				return child[0] === 'Element' ? child[1][1] :
+					child[0] === 'ExcGroup' || child[0] === 'IncGroup' ?
+						child[1] : null;
+			}
+		},
+
+		processChildren: function(children) {
 
 			for (var i = 0, l = children.length; i < l; ++i) {
 				var type = children[i][0];
@@ -233,35 +303,11 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				} else if (type === 'IncGroup') {
 					this.processIncGroup(children[i][1]);
 				} else if (type === 'ExcGroup') {
-					exclusives = children[i];
-					break;
+					this._handleExcGroup(children[i], i);
+					return;
 				} else {
 					this.processProperty(type, children[i][1]);
 				}
-			}
-
-			if (exclusives) {
-				this.htmlAttributes = [];
-				this.htmlContent = [];
-				this.collectOutput = function(){};
-				var html = [];
-				var tail = exclusives[2];
-				exclusives = exclusives[1];
-				for (var n = 0, nl = exclusives.length; n < nl; ++n) {
-					var newSpec = [ this.spec[0], this.spec[1].slice() ];
-					newSpec[1][i] = exclusives[n];
-					console.log('PROCESS EXC', exclusives[n], tail)
-					html.push(
-						new (this instanceof RootElement ? RootElement : Element)(
-							newSpec,
-							this.config,
-							this.parentElement,
-							this.indentation
-						).html
-					);
-					console.log('PROCESS EXC', this.htmlContent)
-				}
-				this.htmlOutput.push( html.join(this.isPretty ? '\n' : '') );
 			}
 
 		},
