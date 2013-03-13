@@ -7,6 +7,8 @@
 {
 
 	var toString = {}.toString;
+	var push = [].push;
+
 	function deepCopyArray(arr) {
 		var out = [];
 		for (var i = 0, l = arr.length; i < l; ++i) {
@@ -30,94 +32,13 @@
 		return $1 + '%%__STRING_TOKEN___%%' + (stringTokens.push($2) - 1);
 	});
 
-	var isCurly = /\/\*\s*siml:curly=true\s*\*\//i.test(input);
-
 	// Remove comments:
 	input = input.replace(/\/\*[\s\S]*?\*\//g, '');
 	input = input.replace(/\/\/.+?(?=[\r\n])/g, '');
 
-	(function() {
+	//var EOF = '%%__EOF__%%';
+	//input += '%%__EOF__%%';
 
-		// Avoid magical whitespace if we're definitely using curlies:
-		if (isCurly) {
-			return;
-		}
-
-		// Here we impose hierarchical curlies on the basis of indentation
-		// This is used to make, e.g.
-		// a\n\tb
-		// into
-		// a{b}
-
-		input = input.replace(/^(?:\s*\n)+/g, '');
-
-		var cur;
-		var lvl = 0;
-		var lines = [];
-		var step = null;
-
-		input = input.split(/[\r\n]+/);
-
-		for (var i = 0, l = input.length; i < l; ++i) {
-
-			var line = input[i];
-
-			var indent = line.match(/^\s*/)[0]; 
-			var indentLevel = (indent.match(/\s/g)||[]).length;
-
-			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
-
-			if (step == null) {
-				step = nextIndentLevel - indentLevel;
-			}
-
-			if (/^\s+$/.test(line)) {
-				lines.push(line);
-				continue;
-			}
-
-			// Test for a non selector at start of line:
-			if (!/^\s*[A-Za-z0-9-_#.]+\s*(?:>\s*[A-Za-z0-9-_#.]+)*/.test(line)) {
-				cur = indentLevel;
-				// Exit, we're not interested in attributes, directives [anything that's not a selector]
-				lines.push(line);
-				continue;
-			}
-
-			// Don't seek to add curlies to places where curlies already exist:
-			if (/[{}]\s*$/.test(line)) {
-				lines.push(line);
-				continue;
-			}
-
-			line = line.substring(indent.length);
-
-			if (indentLevel < cur) { // dedent
-				var diff = cur - indentLevel;
-				while (1) {
-					diff -= step;
-					if (lvl === 0 || diff < 0) {
-						break;
-					}
-					lvl--;
-					lines[i-1] += '}';
-				}
-			}
-
-			if (nextIndentLevel > indentLevel) { // indent
-				lvl++; 
-				lines.push(indent + line + '{');
-			} else {
-				lines.push(indent+line);
-			}
-
-			cur = indentLevel;  
-			 
-		}
-
-		input = lines.join('\n'); //{ // make curlies BALANCE for peg!
-		input += Array(lvl+1).join('}');
-	}());
 } 
 
 /**
@@ -125,34 +46,22 @@
  */
 
 start
-	= children:children {
+	= _ children:children _ {
 		return children;
 	}
 
 children
-	= all:(_ child _ ";"? '+'? _)* {
+	= all:(_ siblingChild/child _)* {
 			var children = [];
 			for (var i = 0; i < all.length; i++) {
 				var name = all[i][1][0];
 				var value = all[i][1][1];
 				if (name === 'Group') {
-					children.push.apply(children, value);
+					push.apply(children, value);
 					continue;
 				}
-				children.push([name, value]);
-			}
-			return children;
-		}
-
-singleLineChildren
-	= all:(child [\t ]* '+'? [\t ]*)+ {
-			var children = [];
-			for (var i = 0; i < all.length; i++) {
-				var name = all[i][0][0];
-				var value = all[i][0][1];
-				if (name === 'Group') {
-					children.push.apply(children, value);
-					continue;
+				if (name === 'DeclaredElement') {
+					name = 'Element';
 				}
 				children.push([name, value]);
 			}
@@ -163,10 +72,75 @@ singleLineChildren
  * CHILD TYPES
  */
 
+ siblingChild
+	= head:child cSibling:(_'+'_ siblingChild)? {
+		var g = ['Group', [
+			head
+		]];
+		if (cSibling.length) {
+			cSibling = cSibling[3];
+			if (cSibling[0] == 'Group') { 
+				push.apply(g[1], cSibling[1]);
+			} else {
+				g[1].push(cSibling[3]);
+			}
+		}
+		return g;
+	}
+
 child
 	= s:string {
 		return ['Directive', ['_fillText', s]];
 	}
+	/ head:element body:( (_','_) (elementWithDeclaredChildren/element) )+ {
+
+			var elements = [];
+
+			body.unshift([,head]);
+
+			var source = body.pop()[1];
+
+			for (var i = 0; i < body.length; i++) {
+
+				var name = body[i][1][0];
+				var value = body[i][1][1];
+
+				if (name === 'Group') {
+					push.apply(elements, value);
+					continue;
+				}
+
+				elements.push([name, value]);
+
+			}
+
+			console.warn(source);
+
+			var mergeChildren;
+
+			if (source && (source[0] === 'DeclaredElement'  || source[0] === 'Group')) {
+
+				if (source[0] === 'Group') {
+					mergeChildren = source[2];
+				} else {
+					source[0] = 'Element';
+					mergeChildren = source[1][1];
+				}
+
+				for (var i = 0; i < elements.length; i++) {
+				console.warn('Merging', mergeChildren.toString(), 'into', elements[i].toString());
+					push.apply(elements[i][1][1], mergeChildren);
+				}
+			}
+
+			if (source[0] === 'Group') {
+				push.apply(elements, source[1]);
+			} else {
+				elements.push(source);
+			}
+
+			return elements;
+		}
 	/ name:attributeName _ ":" _ value:value _ ";" {
 		return ['Attribute', [name, value]];
 	}
@@ -179,20 +153,64 @@ child
 	/ directive:directive {
 		return ['Directive', directive];
 	}
-	/ els:groupedElement {
-		if (els[0] === 'Element') {
-			els = [ els ];
-		} else if (els[0] === 'Group') {
-			els = els[1];
-		}
-		return ['Group', els];
-	}
+	/ elementWithDeclaredChildren
+	/ element
 	/ name:attributeName _ ":" _ value:value {
 		return ['Attribute', [name, value]];
 	}
 
+elementWithDeclaredChildren
+	= selector:selector _ children:elementRHSChildren { return ['DeclaredElement', [selector, children]]; }
+
+/**
+ * Elements
+ */
+element "Element"
+	= els:groupedElement {
+		return els;
+	}
+	/*/ selectors:(selector [ \t]* '>'? [ \t]*)+ _ "{" _ children:children _ "}" !(_ '+') {
+		// Ensure that 'a b {c} d' consider 'a b {c}' as one el definition
+		// and 'd' as another. Otherwise we get probs like a{b}d, with d
+		// being a child of b.
+		// BUT (notice the !'+') still allow a{b}+c{d} (a>b,c>d)
+		var cur;
+		var root = cur = [selectors.shift()[0], []];
+		for (var i = 0, l = selectors.length; i < l; ++i) {
+			cur[1].push([
+				'Element', cur = [selectors[i][0], []]
+			]);
+		}
+		cur[1] = children;
+		return ['Element', root];
+	}*/
+	/ selector:selector [\t >]* c:child/siblingChild {
+		var children = c[0] == 'Group' ? c[1] : [c];
+		return ['Element', [selector, children]];
+	}
+	/ selector:selector [\t ]* text:string [\t ]* el:element {
+		var children = [['Attribute', ['text', text]], el];
+		return ['Element', [selector, children]];
+	}
+	/ selector:selector [\t ]* text:string {
+		return ['Element',
+			[selector, [
+				['Attribute', ['text', text]]
+			]]
+		];
+	}
+	/ selector:selector { return ['Element', [selector, []]]; }
+
+elementRHSChildren
+	= "{" _ "}" { return []; }
+	/ "{" _ children:children _ "}" { return children; }
+	/ text:string _ "{" _ children:children _ "}" {
+		children.unshift(['Attribute', ['text', text]]);
+		return children;
+	}
+
 groupedElement "GroupedElement"
-	= '(' _ first:groupedElement rest:(_ ',' _ groupedElement)* _ ')' _ mergeSelector:selectorRepeatableComponent* mergeChildren:(elementRHSChildren/('>'? _ child))? {
+	= '(' _ first:element rest:(_ ',' _ element)* _ ')' _ mergeSelector:selectorRepeatableComponent* mergeChildren:(elementRHSChildren/('>'? _ child))? {
 
 		function collectTargets(element) {
 			var targets = [];
@@ -220,9 +238,9 @@ groupedElement "GroupedElement"
 
 			for (var targets, e = elGroupChildren.length; e--;) {
 				targets = collectTargets(elGroupChildren[e]);
-				subjectChildren.push.apply(subjectChildren, targets || [elGroupChildren[e]]);
+				push.apply(subjectChildren, targets || [elGroupChildren[e]]);
 			}
-			els.push.apply(els, elGroupChildren);
+			push.apply(els, elGroupChildren);
 
 		}
 
@@ -235,56 +253,14 @@ groupedElement "GroupedElement"
 			mergeChildren = deepCopyArray(mergeChildren);
 			//mergeSelector = deepCopyArray(mergeSelector); // TODO: is needed?
 			if (mergeSelector.length) {
-				subjectChildren[s][1][0].push.apply(subjectChildren[s][1][0], mergeSelector);
+				push.apply(subjectChildren[s][1][0], mergeSelector);
 			}
 			if (mergeChildren.length) {
-				subjectChildren[s][1][1].push.apply(subjectChildren[s][1][1], mergeChildren);
+				push.apply(subjectChildren[s][1][1], mergeChildren);
 			}
 		}
 
-		return ['Group', els];
-	}
-	/ el:element {
-		return ['Element', el];
-	}
-
-/**
- * Elements
- */
-element "Element"
-	= selector:selector _ children:elementRHSChildren { return [selector, children]; }
-	/ selectors:(selector [ \t]* '>'? [ \t]*)+ _ "{" _ children:children _ "}" !(_ '+') {
-		// Ensure that 'a b {c} d' consider 'a b {c}' as one el definition
-		// and 'd' as another. Otherwise we get probs like a{b}d, with d
-		// being a child of b.
-		// BUT (notice the !'+') still allow a{b}+c{d} (a>b,c>d)
-		var cur;
-		var root = cur = [selectors.shift()[0], []];
-		for (var i = 0, l = selectors.length; i < l; ++i) {
-			cur[1].push([
-				'Element', cur = [selectors[i][0], []]
-			]);
-		}
-		cur[1] = children;
-		return root;
-	}
-	/ selector:selector [\t >]* c:singleLineChildren { return [selector, c]; }
-	/ selector:selector [\t ]* text:string [\t ]* el:element {
-		var children = [['Attribute', ['text', text]], ['Element', el]];
-		return [selector, children];
-	}
-	/ selector:selector [\t ]* text:string { return [selector, [['Attribute', ['text', text]]]]; }
-	/ selector:selector { return [selector, []]; }
-
-elementRHSChildren
-	= "{" _ "}" { return []; }
-	/ "{" _ children:children _ "}" _ '+'? { return children; }
-	/ text:string _ "{" _ children:children _ "}" {
-		children.unshift(['Attribute', ['text', text]]);
-		return children;
-	}
-	/ '+' {
-		return [];
+		return ['Group', els, mergeChildren];
 	}
 
 /**
@@ -341,13 +317,13 @@ selectorAttrValue
  * Directives &  Attributes
  */
 directive "Directive"
-	= name:directiveName "(" ")" {
+	= '@' name:directiveName "(" ")" {
 		return [name];
 	}
-	/ name:directiveName "(" args:arrayElements ")" {
+	/ '@' name:directiveName "(" args:arrayElements ")" {
 		return [name, args];
 	}
-	/ name:directiveName arg:braced {
+	/ '@' name:directiveName arg:braced {
 		return [name, [arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')]];
 	}
 

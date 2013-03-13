@@ -227,7 +227,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			var children = this.children;
 			for (var i = 0, l = children.length; i < l; ++i) {
 				var type = children[i][0];
-				if (type === 'Element') {
+				if (type === 'Element' || type === 'DeclaredElement') {
 					this.processElement.apply(this, children[i][1]);
 				} else {
 					this.processProperty(type, children[i][1]);
@@ -274,6 +274,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	Parser.isArray =  isArray;
 
 	Parser.Element = Element;
+	Parser.DeclaredElement = Element;
 
 	Parser.Attribute = ConfigurablePropertyFactory('attributes', DEFAULT_ATTRIBUTES);
 	Parser.Directive = ConfigurablePropertyFactory('directives', DEFAULT_DIRECTIVES);

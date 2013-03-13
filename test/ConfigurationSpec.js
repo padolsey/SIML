@@ -39,7 +39,7 @@ describe('Configuration', function() {
 		});
 	});
 	describe('config:curly', function() {
-		it('Does attempt magical whitespace when curly is undefined/false [default]', function() {
+		xit('Does attempt magical whitespace when curly is undefined/false [default]', function() {
 			expect(siml.parse('\
 				a\n\
 					b\n\
