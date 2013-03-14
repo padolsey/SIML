@@ -34,7 +34,7 @@
 	input = input.replace(/\/\*[\s\S]*?\*\//g, '');
 	input = input.replace(/\/\/.+?(?=[\r\n])/g, '');
 
-	console.warn(input);
+	console.log(input);
 
 } 
 
@@ -49,7 +49,7 @@ start
  * MSeries -- A multiline series of LSeries
  */
 MSeries
-	= _ head:LSeries body:([\r\n] _ LSeries)* _ {
+	= _ head:CSeries body:([\r\n] _ CSeries)* _ {
 		var all = [];
 		body.unshift([,,head]);
 		for (var i = 0, l = body.length; i < l; ++i) {
@@ -70,7 +70,7 @@ LSeries
 					sep = '+';
 				}
 
-				if (sep.indexOf('+') > -1) {
+				if (sep.indexOf(',') > -1 || sep.indexOf('+') > -1) {
 					return ['IncGroup', [a,b]];
 				}
 
@@ -86,28 +86,37 @@ LSeries
 			case 'Directive': {
 				return ['IncGroup', [a, b]];
 			}
+			case 'Attribute': {
+				return ['IncGroup', [a, b]];
+			}
 		}
 		console.warn(':::', a, b)
 		return 'ERROR';
 	}
 	/ Single
 
+CSeries
+	= a:LSeries _ ',' _ b:CSeries {
+		return ['IncGroup', [a, b]]; // Defaults to siblings
+	}
+	/ LSeries
+
 /**
  * Single -- A single simple component, such as an Element or Attribute
  */ 
 Single
 	= Attribute
-	/ '(' _ head:LSeries body:(_ '/' _ LSeries)* _ ')' selector:selectorRepeatableComponent* sep:[> \t+]* tail:Single? {
+	/ '(' _ head:CSeries body:(_ '/' _ CSeries)* _ ')' selector:selectorRepeatableComponent* sep:[> \t+]* tail:Single? {
 		var all = [];
 		body.unshift([,,,head]);
 		for (var i = 0, l = body.length; i < l; ++i) {
 			all.push(body[i][3]);
 		}
-		return ['ExcGroup', all, {
-			tailChild: tail,
-			tailSelector: selector,
-			tailChildType: sep.indexOf('+') > -1 ? 'sibling' : 'descendent'
-		}];
+		return ['ExcGroup', all, [
+			tail,
+			selector,
+			sep.indexOf('+') > -1 ? 'sibling' : 'descendent'
+		]];
 	}
 	/ Element
 	/ Text

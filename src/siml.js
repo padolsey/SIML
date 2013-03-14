@@ -3,6 +3,8 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 	'use strict';
 
+	var push = [].push;
+
 	var DEFAULT_TAG = 'div';
 	var DEFAULT_INDENTATION = '  ';
 
@@ -64,6 +66,17 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	}
 	function trim(s) {
 		return String(s).replace(/^\s\s*|\s\s*$/g, '');
+	}
+	function deepCopyArray(arr) {
+		var out = [];
+		for (var i = 0, l = arr.length; i < l; ++i) {
+			if (isArray(arr[i])) {
+				out[i] = deepCopyArray(arr[i]);
+			} else {
+				out[i] = arr[i];
+			}
+		}
+		return out;
 	}
 	function defaults(defaults, obj) {
 		for (var i in defaults) {
@@ -222,7 +235,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		},
 
-		_handleExcGroup: function(excGroup, specChildIndex) {
+		_handleExcGroup: function(excGroup, specChildren, specChildIndex) {
 
 			this.htmlAttributes = [];
 			this.htmlContent = [];
@@ -230,14 +243,13 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			var html = [];
 			var tail = excGroup[2];
 
-				console.log( tail, attachTail(excGroup, tail), ':::', excGroup ); 
+			attachTail(excGroup, tail); 	
 
 			var exclusives = excGroup[1];
 
 			for (var n = 0, nl = exclusives.length; n < nl; ++n) {
+				specChildren[specChildIndex] = exclusives[n];
 				var newSpec = [ this.spec[0], this.spec[1].slice() ];
-				newSpec[1][specChildIndex] = exclusives[n];
-				console.log('PROCESS EXC', exclusives[n], tail)
 				html.push(
 					new (this instanceof RootElement ? RootElement : Element)(
 						newSpec,
@@ -246,42 +258,66 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 						this.indentation
 					).html
 				);
-				console.log('PROCESS EXC', this.htmlContent)
 			}
 
 			this.htmlOutput.push( html.join(this.isPretty ? '\n' : '') );
 
-			function attachTail(start, tail) {
+			// attachTail
+			// Goes through children (equal candidacy) looking for places to append
+			// both the tailChild and tailSelector. Note: they may be placed in diff places
+			// as in the case of `(a 'c', b)>d`
+			function attachTail(start, tail, hasAttached) {
 				var children = getChildren(start);
+				var tailChild = tail[0];
+				var tailSelector = tail[1];
+				var tailChildType = tail[2];
 
-				if (!children) { return false; }
+				var hasAttached = hasAttached || {
+					child: false,
+					selector: false
+				};
 
-				if (!children.length) {
-					if (tail.tailSelector && start[0] === 'Element') {
-						start[1][0].push( tail.tailSelector );
-					}
-					if (tail.tailChild) {
-						children.push(tail.tailChild);
-					}
-					return true;
+				if (hasAttached.child && hasAttached.selector) {
+					return hasAttached;
 				}
 
-				var hasAttached = false;
-
-				for (var i = 0, l = children.length; i < l; ++i) {
-					var child = children[i];
-					if (tail.tailChildType === 'sibling') {
-						var cChildren = getChildren(child);
-						if (!cChildren || !cChildren.length) {
-							// Add tailChild as sibling of child
-							children[i] = ['IncGroup', [
-								child,
-								tail.tailChild
-							]];
+				if (children) {
+					for (var i = 0, l = children.length; i < l; ++i) {
+						var child = children[i];
+						if (!hasAttached.child && tailChildType === 'sibling') {
+							var cChildren = getChildren(child);
+							if (!cChildren || !cChildren.length) {
+								// Add tailChild as sibling of child
+								children[i] = ['IncGroup', [
+									child,
+									deepCopyArray(tailChild)
+								]];
+							}
+							hasAttached.child = true;
 						}
-						continue;
+						hasAttached = attachTail(child, tail, {
+							child: false,
+							selector: false
+						});
 					}
-					hasAttached = attachTail(child, tail);
+				}
+
+				if (!hasAttached.selector) {
+					if (start[0] === 'Element') {
+						if (tailSelector) {
+							push.apply(start[1][0], tailSelector);
+						}
+						hasAttached.selector = true;
+					}
+				}
+
+				if (!hasAttached.child) {
+					if (children) {
+						if (tailChild) {
+							children.push(deepCopyArray(tailChild));
+						}
+						hasAttached.child = true;
+					}
 				}
 
 				return hasAttached;
@@ -303,7 +339,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				} else if (type === 'IncGroup') {
 					this.processIncGroup(children[i][1]);
 				} else if (type === 'ExcGroup') {
-					this._handleExcGroup(children[i], i);
+					this._handleExcGroup(children[i], children, i);
 					return;
 				} else {
 					this.processProperty(type, children[i][1]);
