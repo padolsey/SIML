@@ -10,7 +10,7 @@ describe('DefaultParser: HTML Generation', function() {
 
 	describe('Siblings & Descendants', function() {
 		it('Handles sibling+descendant combos correctly', function() {
-			expect('a>b{c}d').toGenerate('<a><b><c></c></b><d></d></a>');
+			expect('a>b{c}d').toGenerate('<a><b><c></c></b></a><d></d>');
 			expect('a:2{b>c}').toGenerate('<a><b><c></c></b></a><a><b><c></c></b></a>');
 			expect('a+b{c} + d').toGenerate('<a></a><b><c></c></b><d></d>');
 			expect('a>b>c+d>e').toGenerate('<a><b><c></c><d><e></e></d></b></a>');
@@ -39,20 +39,31 @@ describe('DefaultParser: HTML Generation', function() {
 		});
 	});
 
-	describe(':all shortcut', function() {
-		it('Should be able to parse uses correctly', function() {
-			expect('t (b/c)').toGenerate('<t><b></b></t><t><c></c></t>');
-			expect('t (b>a/c)').toGenerate('<t><b><a></a></b></t><t><c></c></t>');
-			expect('t (a.klass/a#id) + j').toGenerate('<t><a class="klass"></a><j></j></t><t><a id="id"></a><j></j></t>');
-			expect('t{ b (x/z)>p }').toGenerate('<t><b><x><p></p></x></b><b><z><p></p></z></b></t>');
-			expect('body (b/a b) "txt"').toGenerate('<body><b>txt</b></body><body><a><b>txt</b></a></body>');
-			expect('a (b, (c/d)) "eggs"').toGenerate('<a><b>eggs</b><c>eggs</c></a><a><b>eggs</b><d>eggs</d></a>');
-			expect('(a, (b/c) x) t').toGenerate('<a><t></t></a><b><x><t></t></x></b><c><x><t></t></x></c>');
-			expect('((a))').toGenerate('<a></a>');
-			expect('(a{id:blah;}/b[id=foo]).same').toGenerate('<a class="same" id="blah"></a><b class="same" id="foo"></b>');
-			expect('((a/b)/(c/d))x').toGenerate('<a><x></x></a><b><x></x></b><c><x></x></c><d><x></x></d>');
-			expect('(a)"foo"{id:bam;}').toGenerate('<a id="bam">foo</a>');
-			expect('(a/B)"foo"').toGenerate('<a>foo</a><B>foo</B>');
+	describe('ExclusiveGroups `(x,y/t)` shortcut', function() {
+		describe('Following Series', function() {
+			it('Should be able to parse uses correctly', function() {
+				expect('t (b/c)').toGenerate('<t><b></b></t><t><c></c></t>');
+				expect('t (b>a/c)').toGenerate('<t><b><a></a></b></t><t><c></c></t>');
+				expect('t (a.klass/a#id)').toGenerate('<t><a class="klass"></a></t><t><a id="id"></a></t>');
+				expect('t{ b (x/z) }').toGenerate('<t><b><x></x></b><b><z></z></b></t>');
+				expect('body (b/a b)').toGenerate('<body><b></b></body><body><a><b></b></a></body>');
+				expect('a (b, (c/d))').toGenerate('<a><b></b></a><a><c></c></a><a><d></d></a>');
+				expect('a>b>c>(x/y)').toGenerate('<a><b><c><x></x></c><c><y></y></c></b></a>');
+				expect('a>b>c>(x,y)').toGenerate('<a><b><c><x></x></c><c><y></y></c></b></a>');
+				expect('ul li ("foo"/"blah"/"bam"/"whoa")').toGenerate('<ul><li>foo</li><li>blah</li><li>bam</li><li>whoa</li></ul>')
+			});
+		});
+		describe('Preceeding Series', function() {
+			it('Should be able to parse uses correctly', function() {
+				expect('body (b/a b) "txt"').toGenerate('<body><b>txt</b></body><body><a><b>txt</b></a></body>');
+				expect('t (a.klass/a#id)+j').toGenerate('<t><a class="klass"></a><j></j></t><t><a id="id"></a><j></j></t>');
+				expect('a (b, (c/d)) "eggs"').toGenerate('<a><b>eggs</b></a><a><c>eggs</c></a><a><d>eggs</d></a>');
+				expect('((b/c) x) t').toGenerate('<b><x><t></t></x></b><c><x><t></t></x></c>');
+				expect('((a))').toGenerate('<a></a>');
+				expect('(a{id:blah;}/b[id=foo]).same').toGenerate('<a class="same" id="blah"></a><b class="same" id="foo"></b>');
+				expect('((a/b)/(c/d))x').toGenerate('<a><x></x></a><b><x></x></b><c><x></x></c><d><x></x></d>');
+				expect('(a/B)"foo"').toGenerate('<a>foo</a><B>foo</B>');
+			});
 		});
 	});
 
@@ -130,6 +141,7 @@ describe('DefaultParser: HTML Generation', function() {
 			].join(''));
 		});
 	});
+	return;
 
 	describe('Significant whitespace', function() {
 		it('Should be able to create a hierarchy from indentation instead of curlies', function() {

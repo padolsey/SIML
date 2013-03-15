@@ -20,11 +20,27 @@
 <body>
 
 	<script id="c" type=t>
+foo { "Look: " span{} "HERE!" }
 
-//(a{id:blah;}/b[id=foo]).same
+
+/*
+
+<a>
+	<b>
+		<c>
+			<x>
+
+<a>
+	<b>
+		<c>
+			<y>
 
 
-(a 'c', b)>d
+
+
+a b c x
+a b c y
+*/
 
 //a {t}
 //a, b x { t }
@@ -39,9 +55,10 @@
 		document.body.innerHTML = jsDump.parse(
 			siml.PARSER.parse(s)
 		) + '<br><br>= = = = = = = = = =<br><br>';
-		document.body.appendChild(document.createTextNode(
-			siml.parse(s)
-		));
+		console.time('1');
+		s = siml.parse(s, {pretty:1});
+		console.timeEnd('1');
+		document.body.appendChild(document.createTextNode(s));
 	</script>
 
 </body>

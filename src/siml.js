@@ -267,6 +267,9 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			// both the tailChild and tailSelector. Note: they may be placed in diff places
 			// as in the case of `(a 'c', b)>d`
 			function attachTail(start, tail, hasAttached) {
+
+				var type = start[0];
+
 				var children = getChildren(start);
 				var tailChild = tail[0];
 				var tailSelector = tail[1];
@@ -282,9 +285,14 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				}
 
 				if (children) {
-					for (var i = 0, l = children.length; i < l; ++i) {
+					for (var i = children.length; i-->0;) {
 						var child = children[i];
-						if (!hasAttached.child && tailChildType === 'sibling') {
+
+						if (child[0] === 'ExcGroup' && child[2][0]) { // has tailChild
+							child = child[2][0];
+						}
+
+						if (tailChildType === 'sibling') {
 							var cChildren = getChildren(child);
 							if (!cChildren || !cChildren.length) {
 								// Add tailChild as sibling of child
@@ -292,13 +300,18 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 									child,
 									deepCopyArray(tailChild)
 								]];
+							hasAttached.child = true; //?
 							}
-							hasAttached.child = true;
+							//break; // TODO
+							continue;
 						}
 						hasAttached = attachTail(child, tail, {
 							child: false,
 							selector: false
 						});
+						if (type === 'IncGroup' && hasAttached.child) {
+							break;
+						}
 					}
 				}
 

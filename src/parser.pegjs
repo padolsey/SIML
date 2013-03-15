@@ -34,7 +34,7 @@
 	input = input.replace(/\/\*[\s\S]*?\*\//g, '');
 	input = input.replace(/\/\/.+?(?=[\r\n])/g, '');
 
-	console.log(input);
+	//console.log(input);
 
 } 
 
@@ -49,99 +49,144 @@ start
  * MSeries -- A multiline series of LSeries
  */
 MSeries
-	= _ head:CSeries body:([\r\n] _ CSeries)* _ {
+	= _ head:CSeries? body:([\r\n\t ]* CSeries)* _ {
+		if (!head) {
+			return ['IncGroup', []];
+		}
 		var all = [];
-		body.unshift([,,head]);
+		body.unshift([,head]);
 		for (var i = 0, l = body.length; i < l; ++i) {
-			all.push( body[i][2] );
+			all.push( body[i][1] );
 		}
 		return ['IncGroup', all];
+	}
+
+/**
+ * CSeries -- A comma series of LSeries
+ */
+CSeries
+	= a:LSeries b:(_ ',' _ CSeries)? {
+		if (b[3]) {
+			return ['IncGroup', [a, b[3]], 'CommaGroup']; 
+		}
+		return a;
 	}
 
 /**
  * LSeries --  A single line series of Singles
  */
 LSeries
-	= a:Single sep:[> \t+]* b:LSeries {
-		switch (a[0]) {
+	= singleA:Single tail:([> \t+]* LSeries)? _ decl:Declaration? {
+
+		var seperator = tail[0] && tail[0].join('');
+		var singleB = tail[1];
+
+		if (decl) {
+			var declarationSibling = decl[1][1];
+			var declarationChildren = decl[1][0];
+			if (singleB) {
+				if (singleB[0] === 'Element') singleB[1][1].push(declarationChildren);
+				if (declarationSibling) {
+					singleB = ['IncGroup', [singleB, declarationSibling]];
+				}
+			} else {
+				if (singleA[0] === 'Element') singleA[1][1].push(declarationChildren);
+				if (declarationSibling) {
+					singleA = ['IncGroup', [singleA, declarationSibling]];
+				}
+			}
+		}
+
+		if (!tail.length) {
+			return singleA;
+		}
+
+		switch (singleA[0]) {
 			case 'Element': {
 
-				if (a[1][2] && a[1][2].declared) {
-					sep = '+';
-				}
-
-				if (sep.indexOf(',') > -1 || sep.indexOf('+') > -1) {
-					return ['IncGroup', [a,b]];
+				if (seperator.indexOf(',') > -1 || seperator.indexOf('+') > -1) {
+					return ['IncGroup', [singleA,singleB]];
 				}
 
 				// a>b
-				if (a[0] === 'Element') {
-					a[1][1].push(b); 
-				} else if (a[0] === 'IncGroup' || a[0] === 'ExcGroup') {
-					a[1].push(b);
+				if (singleA[0] === 'Element') {
+					singleA[1][1].push(singleB); 
+				} else if (singleA[0] === 'IncGroup' || singleA[0] === 'ExcGroup') {
+					singleA[1].push(singleB);
 				}
 
-				return a;
+				return singleA;
 			}
 			case 'Directive': {
-				return ['IncGroup', [a, b]];
+				return ['IncGroup', [singleA, singleB]];
 			}
 			case 'Attribute': {
-				return ['IncGroup', [a, b]];
+				return ['IncGroup', [singleA, singleB]];
 			}
 		}
-		console.warn(':::', a, b)
+		console.warn(':::', singleA, singleB)
 		return 'ERROR';
 	}
-	/ Single
-
-CSeries
-	= a:LSeries _ ',' _ b:CSeries {
-		return ['IncGroup', [a, b]]; // Defaults to siblings
+	/ '(' _ head:CSeries body:(_ '/' _ CSeries)* _ ')' selector:selectorRepeatableComponent* seperator:[> \t+]* tail:Single? {
+		var all = [];
+		body.unshift([,,,head]);
+		for (var i = 0, l = body.length; i < l; ++i) {
+			if (body[i][3][2] === 'CommaGroup') {
+				// Make (a,b,c/g) be considered as ((a/b/c/)/g)
+				body[i][3][0] = 'ExcGroup';
+				body[i][3][2] = [];
+			}
+			all.push(body[i][3]);
+		}
+		return ['ExcGroup', all, [
+			tail,
+			selector,
+			seperator.indexOf('+') > -1 ? 'sibling' : 'descendent'
+		]];
 	}
-	/ LSeries
+
+Declaration
+	= '{' c:MSeries? '}' sibling:(_ '+' _ LSeries)? {
+		return ['Declaration', [c, sibling && sibling[3]]];
+	}
 
 /**
  * Single -- A single simple component, such as an Element or Attribute
  */ 
 Single
 	= Attribute
-	/ '(' _ head:CSeries body:(_ '/' _ CSeries)* _ ')' selector:selectorRepeatableComponent* sep:[> \t+]* tail:Single? {
-		var all = [];
-		body.unshift([,,,head]);
-		for (var i = 0, l = body.length; i < l; ++i) {
-			all.push(body[i][3]);
-		}
-		return ['ExcGroup', all, [
-			tail,
-			selector,
-			sep.indexOf('+') > -1 ? 'sibling' : 'descendent'
-		]];
-	}
 	/ Element
 	/ Text
 	/ Directive
-
 
 /**
  * Element
  */
 Element
-	= s:Selector _ '{' m:MSeries '}' {
+	= s:Selector {
 		return ['Element', [
 			s,
-			[m],
+			[]
+		]];
+	}/*
+	= s:Selector tail:(_ '{' MSeries? '}')? {
+
+		var mSeries = tail[2];
+
+		if (!mSeries) {
+			return ['Element', [s, []]];
+		}
+
+		if (!mSeries.length) {
+			return ['Element', [s, [], {declared:1}]];
+		}
+
+		return ['Element', [
+			s,
+			[mSeries],
 			{declared:1}
-		]]
-	}
-	/ s:Selector _ '{' _ '}' {
-		return ['Element',
-			[s, [], {declared:1}]
-		];
-	}
-	/ s:Selector {
-		return ['Element', [s, []]];
-	}
+		]];
+	}*/
 
 /**
  * Selector
@@ -159,26 +204,24 @@ singleSelector
 	}
 
 selectorRepeatableComponent 
-	= selectorId
-	/ selectorClass
+	= selectorIdClass
 	/ selectorPseudo
 	/ selectorAttr
 
 selectorTag
 	= t:[a-z0-9_-]i+ { return ['Tag', t.join('')]; }
 
-selectorId
-	= '#' t:[a-z0-9-_$]i+ { return ['Id', t.join('')]; }
-
-selectorClass
-	= '.' t:[a-z0-9-_$]i+ { return ['Class', t.join('')]; }
+selectorIdClass
+	= f:[#.] t:[a-z0-9-_$]i+ {
+		return [
+			f === '#'  ? 'Id' : 'Class',
+			t.join('')
+		];
+	}
 
 selectorAttr
-	= '[' name:[^\[\]=]+ '=' value:selectorAttrValue? ']' {
-		return ['Attr', [name.join(''), value]];
-	}
-	/ '[' name:[^\[\]]+ ']' {
-		return ['Attr', [name.join('')]];
+	= '[' name:[^\[\]=]+ value:('=' selectorAttrValue)? ']' {
+		return ['Attr', [name.join(''), value.length ? value[1] : null]];
 	}
 
 selectorPseudo
@@ -223,11 +266,8 @@ attributeName "AttributeName"
  * Directive
  */
 Directive "Directive"
-	= name:directiveName "(" ")" {
-		return ['Directive', [name]];
-	}
-	/ name:directiveName "(" args:arrayElements ")" {
-		return ['Directive', [name, args]];
+	= name:directiveName "(" args:arrayElements? ")" {
+		return ['Directive', [name, args.length ? args : null]];
 	}
 	/ name:directiveName arg:braced {
 		return [
@@ -320,7 +360,4 @@ hexDigit
 /* ===== Whitespace ===== */
 
 _ "whitespace"
-	= whitespace*
-
-whitespace
-	= [ \t\n\r]
+	= [ \t\n\r]*
