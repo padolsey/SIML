@@ -10,6 +10,8 @@ SIML is the Simplified Markup Language. **[Try it out here!](http://padolsey.git
 
 ### What is it?
 
+***Proper documentation is in progress***
+
 SIML allows you to write HTML/XML with more ease and less cruft.
 
 You can specify your elements through CSS selectors:
@@ -65,6 +67,7 @@ section {          // Selector
   class: body      // Attribute
   ' foo blah '     // Text directive
   text: 'foo'      // Custom Text Attribute
+  @foo(1,2,3)      // Custom directive
 }
 ```
 
@@ -173,8 +176,8 @@ This means, with a bit of configuration, you can write custom markup for your be
 
 ```js
 ul#todo-list > li
-  repeat( todo in todos | filter:statusFilter )
-  class({
+  @repeat( todo in todos | filter:statusFilter )
+  @class({
     completed: todo.completed,
     editing: todo == editedTodo
   })
