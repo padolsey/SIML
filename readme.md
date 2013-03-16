@@ -187,7 +187,7 @@ This means, with a bit of configuration, you can write custom markup for your be
 
 *This uses the [angular parser](https://github.com/padolsey/siml/blob/master/src/parsers/angular.js) which converts directives and undefined pseudo-classes to `ng-` attributes.*
 
-```js
+```text
 ul#todo-list > li
   @repeat( todo in todos | filter:statusFilter )
   @class({
