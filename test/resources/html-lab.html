@@ -20,9 +20,40 @@
 <body>
 
 	<script id="c" type=t>
-foo { "Look: " span{} "HERE!" }
 
+					section+(X/Y(diva/divb)) {
+						h1(a/span)em[id=foo]
+						(body)(a)(href:foo;)
+					}
 
+/*
+<section></section>
+<X>
+	<h1><a><em id="foo"></em></a></h1>
+	<h1><span><em id="foo"></em></span></h1>
+	<body><a href="foo"></a></body>
+</X>
+<section></section>
+<Y>
+	<diva>
+		<h1><a><em id="foo"></em></a></h1>
+		<h1><span><em id="foo"></em></span></h1>
+		<body><a href="foo"></a></body>
+	</diva>
+</Y>
+<section></section>
+<Y>
+	<divb>
+		<h1><a><em id="foo"></em></a></h1>
+		<h1><span><em id="foo"></em></span></h1>
+		<body><a href="foo"></a></body>
+	</divb>
+</Y>
+*/
+
+// a b
+// a c
+// a d
 /*
 
 <a>
@@ -56,7 +87,7 @@ a b c y
 			siml.PARSER.parse(s)
 		) + '<br><br>= = = = = = = = = =<br><br>';
 		console.time('1');
-		s = siml.parse(s, {pretty:1});
+		s = siml.parse(s, {pretty:0, curly:1});
 		console.timeEnd('1');
 		document.body.appendChild(document.createTextNode(s));
 	</script>

@@ -3,36 +3,36 @@ describe('Angular Parser: HTML Generation', function() {
 		it('Parses correctly', function() {
 			expect(siml.angular.parse('\
 				section#main:cloak\n\
-				  show( todos.length )\n\
+				  @show( todos.length )\n\
 					\n\
 				  input#toggle-all:checkbox\n\
-				    model( allChecked )\n\
-				    click( markAll(allChecked) )\n\
+				    @model( allChecked )\n\
+				    @click( markAll(allChecked) )\n\
 				  label[for=toggle-all] \'Mark all as complete\'\n\
 						\n\
 				  ul#todo-list > li\n\
-				    repeat( todo in todos | filter:statusFilter )\n\
-				    class({\n\
+				    @repeat( todo in todos | filter:statusFilter )\n\
+				    @class({\n\
 				      completed: todo.completed,\n\
 				      editing: todo == editedTodo\n\
 				    })\n\
 						\n\
 				    div.view\n\
 				      input.toggle:checkbox\n\
-				        model( todo.completed )\n\
-				        change( todoCompleted(todo) )\n\
+				        @model( todo.completed )\n\
+				        @change( todoCompleted(todo) )\n\
 				      label\n\
 				        \'{{todo.title}}\'\n\
-				        dblclick( editTodo(todo) )\n\
+				        @dblclick( editTodo(todo) )\n\
 				      button.destroy\n\
-				        click( removeTodo(todo) )\n\
+				        @click( removeTodo(todo) )\n\
 						\n\
 				    form\n\
-				      submit( doneEditing(todo) )\n\
+				      @submit( doneEditing(todo) )\n\
 				      input.edit\n\
-				        model( todo.title )\n\
-				        $todoBlur( doneEditing(todo) )\n\
-				        $todoFocus( todo == editedTodo )\n\
+				        @model( todo.title )\n\
+				        @$todoBlur( doneEditing(todo) )\n\
+				        @$todoFocus( todo == editedTodo )\n\
 			', {pretty:false})).toBe([
 				'<section id="main" ng-cloak ng-show="todos.length">',
 					'<input id="toggle-all" type="checkbox" ng-model="allChecked" ng-click="markAll(allChecked)"/>',

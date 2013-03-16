@@ -235,32 +235,23 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		},
 
-		_handleExcGroup: function(excGroup, specChildren, specChildIndex) {
+		_makeExclusiveBranches: function(excGroup, specChildren, specChildIndex) {
 
-			this.htmlAttributes = [];
-			this.htmlContent = [];
-			this.collectOutput = function(){};
-			var html = [];
 			var tail = excGroup[2];
+			var exclusives = excGroup[1];
+
+			var branches = [];
 
 			attachTail(excGroup, tail); 	
 
-			var exclusives = excGroup[1];
-
 			for (var n = 0, nl = exclusives.length; n < nl; ++n) {
-				specChildren[specChildIndex] = exclusives[n];
-				var newSpec = [ this.spec[0], this.spec[1].slice() ];
-				html.push(
-					new (this instanceof RootElement ? RootElement : Element)(
-						newSpec,
-						this.config,
-						this.parentElement,
-						this.indentation
-					).html
-				);
+				specChildren[specChildIndex] = exclusives[n]; // Mutate
+				var newBranch = deepCopyArray(this.spec);     // Complete copy
+				specChildren[specChildIndex] = excGroup;      // Return to regular
+				branches.push(newBranch);
 			}
 
-			this.htmlOutput.push( html.join(this.isPretty ? '\n' : '') );
+			return branches;
 
 			// attachTail
 			// Goes through children (equal candidacy) looking for places to append
@@ -293,22 +284,27 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 						}
 
 						if (tailChildType === 'sibling') {
-							var cChildren = getChildren(child);
+							var cChildren = getChildren(child); 
 							if (!cChildren || !cChildren.length) {
 								// Add tailChild as sibling of child
 								children[i] = ['IncGroup', [
 									child,
 									deepCopyArray(tailChild)
 								]];
-							hasAttached.child = true; //?
+								hasAttached.child = true; //?
+								if (type === 'IncGroup') {
+									break;
+								} else {
+									continue;
+								}
 							}
-							//break; // TODO
-							continue;
 						}
 						hasAttached = attachTail(child, tail, {
 							child: false,
 							selector: false
 						});
+						// Prevent descendants from being attached to more than one sibling
+						// e.g. a,b or a+b -- should only attach last one (i.e. b)
 						if (type === 'IncGroup' && hasAttached.child) {
 							break;
 						}
@@ -345,17 +341,52 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		processChildren: function(children) {
 
-			for (var i = 0, l = children.length; i < l; ++i) {
-				var type = children[i][0];
-				if (type === 'Element') {
-					this.processElement(children[i][1]);
-				} else if (type === 'IncGroup') {
-					this.processIncGroup(children[i][1]);
-				} else if (type === 'ExcGroup') {
-					this._handleExcGroup(children[i], children, i);
-					return;
-				} else {
-					this.processProperty(type, children[i][1]);
+			var cl = children.length;
+			var i;
+			var childType;
+
+			var exclusiveBranches = [];
+
+			for (i = 0; i < cl; ++i) {
+				if (children[i][0] === 'ExcGroup') {
+					push.apply(
+						exclusiveBranches,
+						this._makeExclusiveBranches(children[i], children, i)
+					);
+				}
+			}
+
+			if (exclusiveBranches.length) {
+
+				this.collectOutput = function(){};
+				var html = [];
+
+				for (var ei = 0, el = exclusiveBranches.length; ei < el; ++ei) {
+					var branch = exclusiveBranches[ei];
+					html.push(
+						new (branch[0] === 'RootElement' ? RootElement : Element)(
+							branch,
+							this.config,
+							this.parentElement,
+							this.indentation
+						).html
+					);
+				}
+
+				this.htmlOutput.push(html.join(this.isPretty ? '\n' : ''));
+
+			} else {
+				for (i = 0; i < cl; ++i) {
+					var childType = children[i][0];
+					if (childType === 'Element') {
+						this.processElement(children[i][1]);
+					} else if (childType === 'IncGroup') {
+						this.processIncGroup(children[i][1]);
+					} else if (childType === 'ExcGroup') {
+						throw new Error('siml: Found ExcGroup in unexpected location');
+					} else {
+						this.processProperty(childType, children[i][1]);
+					}
 				}
 			}
 
@@ -482,8 +513,15 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				spec = [];
 			}
 
+			if (spec[0] === 'Element') {
+				return new Parser.Element(
+					spec[1],
+					singleRunConfig
+				).html;
+			}
+
 			return new Parser.RootElement(
-				['RootElement', spec[1]],
+				['RootElement', [['IncGroup', [spec]]]],
 				singleRunConfig
 			).html;
 		}

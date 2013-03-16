@@ -12,10 +12,10 @@ describe('DefaultParser: HTML Generation', function() {
 		it('Handles sibling+descendant combos correctly', function() {
 			expect('a>b{c}d').toGenerate('<a><b><c></c></b></a><d></d>');
 			expect('a:2{b>c}').toGenerate('<a><b><c></c></b></a><a><b><c></c></b></a>');
-			expect('a+b{c} + d').toGenerate('<a></a><b><c></c></b><d></d>');
+			expect('a+b{c} d').toGenerate('<a></a><b><c></c></b><d></d>');
 			expect('a>b>c+d>e').toGenerate('<a><b><c></c><d><e></e></d></b></a>');
 			expect('a b c + d > p + x').toGenerate('<a><b><c></c><d><p></p><x></x></d></b></a>');
-			expect('f>s{"SIML"}+"is"+a').toGenerate('<f><s>SIML</s>is<a></a></f>');
+			expect('f>(s{"SIML"} "is" a)').toGenerate('<f><s>SIML</s>is<a></a></f>');
 		});
 		describe('Descendant combinator', function() {
 			it('Should be able to handle them', function() {
@@ -47,9 +47,9 @@ describe('DefaultParser: HTML Generation', function() {
 				expect('t (a.klass/a#id)').toGenerate('<t><a class="klass"></a></t><t><a id="id"></a></t>');
 				expect('t{ b (x/z) }').toGenerate('<t><b><x></x></b><b><z></z></b></t>');
 				expect('body (b/a b)').toGenerate('<body><b></b></body><body><a><b></b></a></body>');
-				expect('a (b, (c/d))').toGenerate('<a><b></b></a><a><c></c></a><a><d></d></a>');
+				expect('a (b, (c/d))').toGenerate('<a><b></b><c></c></a><a><b></b><d></d></a>');
 				expect('a>b>c>(x/y)').toGenerate('<a><b><c><x></x></c><c><y></y></c></b></a>');
-				expect('a>b>c>(x,y)').toGenerate('<a><b><c><x></x></c><c><y></y></c></b></a>');
+				expect('a>b>c>(x,y)').toGenerate('<a><b><c><x></x><y></y></c></b></a>');
 				expect('ul li ("foo"/"blah"/"bam"/"whoa")').toGenerate('<ul><li>foo</li><li>blah</li><li>bam</li><li>whoa</li></ul>')
 			});
 		});
@@ -57,12 +57,45 @@ describe('DefaultParser: HTML Generation', function() {
 			it('Should be able to parse uses correctly', function() {
 				expect('body (b/a b) "txt"').toGenerate('<body><b>txt</b></body><body><a><b>txt</b></a></body>');
 				expect('t (a.klass/a#id)+j').toGenerate('<t><a class="klass"></a><j></j></t><t><a id="id"></a><j></j></t>');
-				expect('a (b, (c/d)) "eggs"').toGenerate('<a><b>eggs</b></a><a><c>eggs</c></a><a><d>eggs</d></a>');
+				expect('a (b, (c/d)) "eggs"').toGenerate('<a><b></b><c>eggs</c></a><a><b></b><d>eggs</d></a>');
 				expect('((b/c) x) t').toGenerate('<b><x><t></t></x></b><c><x><t></t></x></c>');
 				expect('((a))').toGenerate('<a></a>');
 				expect('(a{id:blah;}/b[id=foo]).same').toGenerate('<a class="same" id="blah"></a><b class="same" id="foo"></b>');
 				expect('((a/b)/(c/d))x').toGenerate('<a><x></x></a><b><x></x></b><c><x></x></c><d><x></x></d>');
 				expect('(a/B)"foo"').toGenerate('<a>foo</a><B>foo</B>');
+			});
+		});
+		describe('Deeper test cases', function() {
+			it('Should be able to parse correctly', function() {
+				expect('t (a m+q/a)+j').toGenerate('<t><a><m></m><q></q><j></j></a></t><t><a></a><j></j></t>');
+				expect('\
+					section+(X/Y(diva/divb)) {\n\
+						h1(a/span)em[id=foo]\n\
+						(body)(a)(href:foo;)\
+					}\
+				').toGenerate([
+					'<section></section>',
+					'<X>',
+						'<h1><a><em id="foo"></em></a></h1>',
+						'<h1><span><em id="foo"></em></span></h1>',
+						'<body><a href="foo"></a></body>',
+					'</X>',
+					'<section></section>',
+					'<Y>',
+						'<diva>',
+							'<h1><a><em id="foo"></em></a></h1>',
+							'<h1><span><em id="foo"></em></span></h1>',
+							'<body><a href="foo"></a></body>',
+						'</diva>',
+					'</Y>',
+					'<Y>',
+						'<divb>',
+							'<h1><a><em id="foo"></em></a></h1>',
+							'<h1><span><em id="foo"></em></span></h1>',
+							'<body><a href="foo"></a></body>',
+						'</divb>',
+					'</Y>'
+				].join(''));
 			});
 		});
 	});
@@ -141,7 +174,6 @@ describe('DefaultParser: HTML Generation', function() {
 			].join(''));
 		});
 	});
-	return;
 
 	describe('Significant whitespace', function() {
 		it('Should be able to create a hierarchy from indentation instead of curlies', function() {

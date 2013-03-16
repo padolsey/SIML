@@ -30,11 +30,94 @@
 		return $1 + '%%__STRING_TOKEN___%%' + (stringTokens.push($2) - 1);
 	});
 
+	var isCurly = /\/\*\s*siml:curly=true\s*\*\//i.test(input);
+
 	// Remove comments:
 	input = input.replace(/\/\*[\s\S]*?\*\//g, '');
 	input = input.replace(/\/\/.+?(?=[\r\n])/g, '');
 
-	//console.log(input);
+	(function() {
+
+		// Avoid magical whitespace if we're definitely using curlies:
+		if (isCurly) {
+			return;
+		}
+
+		// Here we impose hierarchical curlies on the basis of indentation
+		// This is used to make, e.g.
+		// a\n\tb
+		// into
+		// a{b}
+
+		input = input.replace(/^(?:\s*\n)+/g, '');
+
+		var cur;
+		var lvl = 0;
+		var lines = [];
+		var step = null;
+
+		input = input.split(/[\r\n]+/);
+
+		for (var i = 0, l = input.length; i < l; ++i) {
+
+			var line = input[i];
+
+			var indent = line.match(/^\s*/)[0]; 
+			var indentLevel = (indent.match(/\s/g)||[]).length;
+
+			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
+
+			if (step == null) {
+				step = nextIndentLevel - indentLevel;
+			}
+
+			if (/^\s+$/.test(line)) {
+				lines.push(line);
+				continue;
+			}
+
+			// Test for a non selector at start of line:
+			if (!/^\s*[A-Za-z0-9-_#.]+\s*(?:>\s*[A-Za-z0-9-_#.]+)*/.test(line)) {
+				cur = indentLevel;
+				// Exit, we're not interested in attributes, directives [anything that's not a selector]
+				lines.push(line);
+				continue;
+			}
+
+			// Don't seek to add curlies to places where curlies already exist:
+			if (/[{}]\s*$/.test(line)) {
+				lines.push(line);
+				continue;
+			}
+
+			line = line.substring(indent.length);
+
+			if (indentLevel < cur) { // dedent
+				var diff = cur - indentLevel;
+				while (1) {
+					diff -= step;
+					if (lvl === 0 || diff < 0) {
+						break;
+					}
+					lvl--;
+					lines[i-1] += '}';
+				}
+			}
+
+			if (nextIndentLevel > indentLevel) { // indent
+				lvl++; 
+				lines.push(indent + line + '{');
+			} else {
+				lines.push(indent+line);
+			}
+
+			cur = indentLevel;  
+
+		}
+
+		input = lines.join('\n'); //{ // make curlies BALANCE for peg!
+		input += Array(lvl+1).join('}');
+	}());
 
 } 
 
@@ -53,12 +136,23 @@ MSeries
 		if (!head) {
 			return ['IncGroup', []];
 		}
+
 		var all = [];
-		body.unshift([,head]);
-		for (var i = 0, l = body.length; i < l; ++i) {
-			all.push( body[i][1] );
+
+		if (head[0] === 'Element' && !body.length) {
+			//if (!body.length) {
+				return head;
+			//}
+		} else {
+			head = ['IncGroup', [head]];
 		}
-		return ['IncGroup', all];
+
+		//body.unshift([,head]);
+		for (var i = 0, l = body.length; i < l; ++i) {
+			head[1].push(body[i][1]);
+		}
+		return head;
+		//return ['IncGroup', all];
 	}
 
 /**
@@ -82,18 +176,11 @@ LSeries
 		var singleB = tail[1];
 
 		if (decl) {
-			var declarationSibling = decl[1][1];
 			var declarationChildren = decl[1][0];
 			if (singleB) {
 				if (singleB[0] === 'Element') singleB[1][1].push(declarationChildren);
-				if (declarationSibling) {
-					singleB = ['IncGroup', [singleB, declarationSibling]];
-				}
 			} else {
 				if (singleA[0] === 'Element') singleA[1][1].push(declarationChildren);
-				if (declarationSibling) {
-					singleA = ['IncGroup', [singleA, declarationSibling]];
-				}
 			}
 		}
 
@@ -127,9 +214,22 @@ LSeries
 		console.warn(':::', singleA, singleB)
 		return 'ERROR';
 	}
-	/ '(' _ head:CSeries body:(_ '/' _ CSeries)* _ ')' selector:selectorRepeatableComponent* seperator:[> \t+]* tail:Single? {
+	/ '(' _ head:MSeries body:(_ '/' _ MSeries)* _ ')' selector:selectorRepeatableComponent* _ tail:ExcGroupRHS?  {
+
 		var all = [];
+		var separator = '';
+
 		body.unshift([,,,head]);
+
+		if (tail) {
+			if (tail[0] === 'Declaration') {
+				tail = tail[1][0];
+			} else {
+				separator = tail[1];
+				tail = tail[0];
+			}
+		}
+
 		for (var i = 0, l = body.length; i < l; ++i) {
 			if (body[i][3][2] === 'CommaGroup') {
 				// Make (a,b,c/g) be considered as ((a/b/c/)/g)
@@ -141,13 +241,19 @@ LSeries
 		return ['ExcGroup', all, [
 			tail,
 			selector,
-			seperator.indexOf('+') > -1 ? 'sibling' : 'descendent'
+			separator.indexOf('+') > -1 ? 'sibling' : 'descendent'
 		]];
 	}
 
+ExcGroupRHS
+	= Declaration
+	/ separator:[> \t+]* tail:LSeries {
+		return [tail, separator];
+	}
+
 Declaration
-	= '{' c:MSeries? '}' sibling:(_ '+' _ LSeries)? {
-		return ['Declaration', [c, sibling && sibling[3]]];
+	= '{' c:MSeries? '}' {
+		return ['Declaration', [c]];
 	}
 
 /**
