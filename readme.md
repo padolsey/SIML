@@ -207,6 +207,8 @@ This would become:
 </ul>
 ```
 
+**[More info on AngularJS in SIML](https://github.com/padolsey/SIML/wiki/AngularJS)**
+
 ### Distributions
 
  * `dist/siml.js`: This is the default parser. No fancy stuff. Not even `input:checkbox` support.
