@@ -104,11 +104,41 @@
 			<label for="curly" id="curly-label">
 				Using curlies? <input id="curly" type="checkbox" checked="false" />
 			</label>
-			<div id="input">
-section#a.b {
-	'something'
-}
-			</div>
+			<div id="input">// SIML can do fancy-pants tabby HTML:<br>
+section<br>
+    header > h1 'Hi there!'<br>
+    p 'This is a demo of SIML'<br>
+    p 'Try typing something...' <br>
+    p > small<br>
+        '<br>
+        Tip: Tick "Using curlies?" if you<br>
+        wanna force SIML to parse without paying<br>
+        attention to indentation level.<br>
+        '<br>
+<br>
+'' ////////////////////////////////////////////////////<br>
+hr ////////////////////////////////////////////////////<br>
+'' ////////////////////////////////////////////////////<br>
+<br>
+// SIML can do HTML that looks like CSS<br>
+form {<br>
+    fieldset {<br>
+        label {<br>
+            for: "your-name";<br>
+            text: "Enter something..."<br>
+        }<br>
+        input.something#your-name {<br>
+            placeholder: " something ";<br>
+        }<br>
+    }<br>
+}<br>
+<br>
+'' ////////////////////////////////////////////////////<br>
+hr ////////////////////////////////////////////////////<br>
+'' ////////////////////////////////////////////////////<br>
+<br>
+// SIML can do one-liners with vowelless quick tags:<br>
+ftr>(strng{'SIML'} 'is on ' a[href='//git.io/siml']'Github')</div>
 		</div>
 		<pre id="html"></pre>
 		<div id="out"></div>

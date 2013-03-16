@@ -103,14 +103,30 @@
 	<div id="header">
 		<h1>Try out <a href="https://github.com/padolsey/SIML">SIML</a></h1>
 		<label for="curly" id="curly-label">
-			Using curlies? <small>[for nesting]</small> <input id="curly" type="checkbox" />
+			FORCE curlies? <small>[for nesting]</small> <input id="curly" type="checkbox" />
 		</label>
 	</div>
 
 	<div id="tryout">
 		<div id="input-container">
 			<div id="error"></div>
-			<div id="input">// SIML can do HTML that looks like CSS<br>
+			<div id="input">// SIML can do fancy-pants tabby HTML:<br>
+section<br>
+    header > h1 'Hi there!'<br>
+    p 'This is a demo of SIML'<br>
+    p 'Try typing something...' <br>
+    p > small<br>
+        '<br>
+        Tip: Tick "Force curlies?" if you<br>
+        wanna force SIML to parse without paying<br>
+        attention to indentation level.<br>
+        '<br>
+<br>
+'' ////////////////////////////////////////////////////<br>
+hr ////////////////////////////////////////////////////<br>
+'' ////////////////////////////////////////////////////<br>
+<br>
+// SIML can do HTML that looks like CSS<br>
 form {<br>
     fieldset {<br>
         label {<br>
@@ -123,9 +139,12 @@ form {<br>
     }<br>
 }<br>
 <br>
+'' ////////////////////////////////////////////////////<br>
+hr ////////////////////////////////////////////////////<br>
+'' ////////////////////////////////////////////////////<br>
 <br>
 // SIML can do one-liners with vowelless quick tags:<br>
-ftr>strng{'SIML'}+'is on '+a[href='//git.io/siml']'Github'</div>
+ftr>(strng{'SIML'} 'is on ' a[href='//git.io/siml']'Github')</div>
 		</div>
 		<pre id="html"></pre>
 		<div id="out"></div>

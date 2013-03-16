@@ -77,15 +77,9 @@
 			}
 
 			// Test for a non selector at start of line:
-			if (!/^\s*[A-Za-z0-9-_#.]+\s*(?:>\s*[A-Za-z0-9-_#.]+)*/.test(line)) {
+			if (!/^\s*%%__STRING_TOKEN___%%/.test(line) && !/^\s*[A-Za-z0-9-_#.]+\s*(?:>\s*[A-Za-z0-9-_#.]+)*/.test(line)) {
 				cur = indentLevel;
-				// Exit, we're not interested in attributes, directives [anything that's not a selector]
-				lines.push(line);
-				continue;
-			}
-
-			// Don't seek to add curlies to places where curlies already exist:
-			if (/[{}]\s*$/.test(line)) {
+				// Exit, we're not interested in attributes, directives [anything that's not a selector/string]
 				lines.push(line);
 				continue;
 			}
@@ -104,6 +98,12 @@
 				}
 			}
 
+			// Don't seek to add curlies to places where curlies already exist:
+			if (/[{}]\s*$/.test(line)) {
+				lines.push(line);
+				continue;
+			}
+
 			if (nextIndentLevel > indentLevel) { // indent
 				lvl++; 
 				lines.push(indent + line + '{');
@@ -118,6 +118,8 @@
 		input = lines.join('\n'); //{ // make curlies BALANCE for peg!
 		input += Array(lvl+1).join('}');
 	}());
+
+	console.log(input);
 
 } 
 

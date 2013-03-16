@@ -21,35 +21,27 @@
 
 	<script id="c" type=t>
 
-					section+(X/Y(diva/divb)) {
-						h1(a/span)em[id=foo]
-						(body)(a)(href:foo;)
-					}
-
-/*
-<section></section>
-<X>
-	<h1><a><em id="foo"></em></a></h1>
-	<h1><span><em id="foo"></em></span></h1>
-	<body><a href="foo"></a></body>
-</X>
-<section></section>
-<Y>
-	<diva>
-		<h1><a><em id="foo"></em></a></h1>
-		<h1><span><em id="foo"></em></span></h1>
-		<body><a href="foo"></a></body>
-	</diva>
-</Y>
-<section></section>
-<Y>
-	<divb>
-		<h1><a><em id="foo"></em></a></h1>
-		<h1><span><em id="foo"></em></span></h1>
-		<body><a href="foo"></a></body>
-	</divb>
-</Y>
-*/
+section
+    header > h1 'Hi there!'
+    p 'This is a demo of SIML'
+    p 'Try typing something...' 
+    p > small
+        '
+        Tip: Tick "Force curlies?" if you
+        wanna force SIML to parse without paying
+        attention to indentation level.
+        '
+form {
+    fieldset {
+        label {
+            for: "your-name";
+            text: "Enter something..."
+        }
+        input.something#your-name {
+            placeholder: " something ";
+        }
+    }
+}
 
 // a b
 // a c
@@ -87,7 +79,7 @@ a b c y
 			siml.PARSER.parse(s)
 		) + '<br><br>= = = = = = = = = =<br><br>';
 		console.time('1');
-		s = siml.parse(s, {pretty:0, curly:1});
+		s = siml.parse(s, {pretty:1, curly:0});
 		console.timeEnd('1');
 		document.body.appendChild(document.createTextNode(s));
 	</script>
