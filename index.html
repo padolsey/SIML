@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8"/>
 	<title>SIML -- Try it out!</title>
-	<script src="dist/siml.html5.js"></script>
+	<script src="dist/siml.all.min.js"></script>
 	<script src="vendor/ace/ace.js"></script>
 	<style>
 		html, body {
@@ -58,7 +58,7 @@
 		#input, #html {
 			font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Droid Sans Mono', 'Consolas', monospace;
 		}
-		#header label {
+		#header #checkbox-container {
 			position: absolute;
 			left: 10px;
 			bottom: 10px;
@@ -70,7 +70,7 @@
 			z-index: 9999;
 			font-size: 10px;
 		}
-		#header #curly-label { left: 60px; }
+		#angular-label { padding-right: 10px; }
 		#header label input { margin: 0; width: 12px; height: 12px; }
 		#input-container {
 			position: relative;
@@ -103,12 +103,14 @@
 
 	<div id="header">
 		<h1>Try out <a href="https://github.com/padolsey/SIML">SIML</a></h1>
-		<label title="Tick to force SIML to ignore hierarchical indentation" for="curly" id="curly-label">
-			FORCE curlies? <small>[for nesting]</small> <input id="curly" type="checkbox" />
-		</label>
-		<label title="Employ Angular parsing for directives/pseudo-classes" for="doAngular" id="angular-label">
-			Angular mode? <input id="doAngular" type="checkbox" checked />
-		</label>
+		<div id="checkbox-container">
+			<label title="Employ Angular parsing for directives/pseudo-classes" for="doAngular" id="angular-label">
+				Angular mode? <input id="doAngular" type="checkbox" checked />
+			</label>
+			<label title="Tick to force SIML to ignore hierarchical indentation" for="curly" id="curly-label">
+				FORCE curlies? <small>[for nesting]</small> <input id="curly" type="checkbox" />
+			</label>
+		</div>
 	</div>
 
 	<div id="tryout">
