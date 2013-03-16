@@ -1,18 +1,31 @@
 # SIML
 
-SIML is the Simplified Markup Language. **[Try it out here!](http://padolsey.github.com/SIML/)**
+**SIML is the Simplified Markup Language.
+It is a conceptual hybrid strongly inspired by the simplicity of CSS and SASS.**
 
-### Why?
+**[Try it out here!](http://padolsey.github.com/SIML/)**
 
+**Proper documentation is in progress ([See 101 intro wiki](https://github.com/padolsey/SIML/wiki/101---Introduction))**
+
+### Why did you make it?
+
+ * This project was originally a personal exploration into the world of language parsing
  * Writing HTML isn't the worst thing in the world. But it takes time. And as a programmer, I'm lazy.
- * This project is a personal exploration into the world of language parsing
  * I enjoy the expressive power of tiny expressions (hence my love of Perl and RegExps)
+
+### *Another* templating hybrid whatchamacallit!1!?
+
+No, SIML isn't a templating language. It doesn't currently provide constructs for
+including data, controlling flow or looping. Reasoning behind this:
+
+1. Feature bloat
+2. People still write plain ol' HTML
+3. Pure DOM templates are on the rise. See AngularJS or Knockout.
 
 ### What is it?
 
-***Proper documentation is in progress***
-
-SIML allows you to write HTML/XML with more ease and less cruft.
+SIML allows you to write HTML with more ease and less cruft. *"SIML"* is the name of the language, 
+and also the utility for converting the language to HTML.
 
 You can specify your elements through CSS selectors:
 
@@ -38,7 +51,7 @@ section.body {
 
 Or significant whitespace (i.e. *indent to nest*):
 
-```text
+```css
 section.body
   h1#title
     'Title'
@@ -62,7 +75,7 @@ That'll give you:
 
 As shown, SIML gives you the expressive power of CSS selectors. It also supports Attributes, Text and Directives. 
 
-```css
+```js
 section {          // Selector
   class: body      // Attribute
   ' foo blah '     // Text directive
