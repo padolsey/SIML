@@ -58,7 +58,7 @@
 		#input, #html {
 			font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Droid Sans Mono', 'Consolas', monospace;
 		}
-		#curly-label {
+		#header label {
 			position: absolute;
 			left: 10px;
 			bottom: 10px;
@@ -70,7 +70,8 @@
 			z-index: 9999;
 			font-size: 10px;
 		}
-		#curly { margin: 0; width: 12px; height: 12px; }
+		#header #curly-label { left: 60px; }
+		#header label input { margin: 0; width: 12px; height: 12px; }
 		#input-container {
 			position: relative;
 			padding: 0;
@@ -104,6 +105,9 @@
 		<h1>Try out <a href="https://github.com/padolsey/SIML">SIML</a></h1>
 		<label title="Tick to force SIML to ignore hierarchical indentation" for="curly" id="curly-label">
 			FORCE curlies? <small>[for nesting]</small> <input id="curly" type="checkbox" />
+		</label>
+		<label title="Employ Angular parsing for directives/pseudo-classes" for="doAngular" id="angular-label">
+			Angular mode? <input id="doAngular" type="checkbox" checked />
 		</label>
 	</div>
 
@@ -151,19 +155,20 @@ ftr>(strng{'SIML'} 'is on ' a[href='//git.io/siml']'Github')</div>
 			var htmlOutput = document.getElementById('html');
 			var output = document.getElementById('out');
 			var curly = document.getElementById('curly');
+			var doAngular = document.getElementById('doAngular');
 			var error = document.getElementById('error');
 			var inputEditor = ace.edit('input');
 			inputEditor.setTheme('ace/theme/github');
 			var inputSession = inputEditor.getSession();
 			inputSession.on('change', debounce(update, 400));
-			curly.onchange = curly.oninput = update;
+			curly.onchange = curly.oninput = doAngular.onchange = doAngular.oninput = update;
 			update();
 			function update() {
 				var value = inputSession.getValue();
 				error.style.display = '';
 				error.innerHTML = '';
 				try {
-					var html = siml.html5.parse( value, {curly: !!curly.checked, indent:'  '} );
+					var html = siml[doAngular.checked?'angular':'html5'].parse( value, {curly: !!curly.checked, indent:'  '} );
 				} catch(e) {
 					error.style.display = 'block';
 					error.innerHTML = String(e);
