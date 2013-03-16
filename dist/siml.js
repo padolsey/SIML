@@ -38,7 +38,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		_default: {
 			type: 'ATTR',
 			make: function(attrName, value) {
-				if (!value) {
+				if (value == null) {
 					return attrName;
 				}
 				return attrName + '="' + escapeHTML(value) + '"';
@@ -3088,6 +3088,9 @@ siml.PARSER = (function(){
       		var lines = [];
       		var step = null;
       
+      		var braceDepth = 0;
+      		var curlyDepth = 0;
+      
       		input = input.split(/[\r\n]+/);
       
       		for (var i = 0, l = input.length; i < l; ++i) {
@@ -3099,11 +3102,15 @@ siml.PARSER = (function(){
       
       			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
       
+      			braceDepth += (line.match(/\(/g)||[]).length - (line.match(/\)/g)||[]).length;
+      			curlyDepth += (line.match(/\{/g)||[]).length - (line.match(/\}/g)||[]).length;
+      
       			if (step == null) {
       				step = nextIndentLevel - indentLevel;
       			}
       
-      			if (/^\s+$/.test(line)) {
+      			if (curlyDepth || braceDepth || /^\s+$/.test(line)) {
+      				//cur = indentLevel;
       				lines.push(line);
       				continue;
       			}
@@ -3150,8 +3157,6 @@ siml.PARSER = (function(){
       		input = lines.join('\n'); //{ // make curlies BALANCE for peg!
       		input += Array(lvl+1).join('}');
       	}());
-      
-      	console.log(input);
       
       
       

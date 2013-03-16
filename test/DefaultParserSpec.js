@@ -209,6 +209,57 @@ describe('DefaultParser: HTML Generation', function() {
 				'</body>'
 			].join(''));
 		});
+		it('Should handle inner braces and curlies by ignoring them and content within', function() {
+			expect('\
+				body\n\
+					a\n\
+						b {\n\
+							// These should be considered equal indentation since they\'re within curlies\n\
+							c\n\
+								e\n\
+									f\n\
+						}\n\
+						p {\n\
+				e\n\
+			u\n\
+						}\n\
+						m\n\
+							xp {a:123;}\n\
+								lp#a.g {b:123;}\n\
+						a(\n\
+							a/\n\
+								b/\n\
+								c\n\
+						)\n\
+			').toGenerate([
+				'<body>',
+					'<a>',
+						'<b>',
+							'<c></c>',
+							'<e></e>',
+							'<f></f>',
+						'</b>',
+						'<p>',
+							'<e></e>',
+							'<u></u>',
+						'</p>',
+						'<m>',
+							'<xp a="123"></xp>',
+							'<lp id="a" class="g" b="123"></lp>',
+							'<a>',
+								'<a></a>',
+							'</a>',
+							'<a>',
+								'<b></b>',
+							'</a>',
+							'<a>',
+								'<c></c>',
+							'</a>',
+						'</m>',
+					'</a>',
+				'</body>'
+			].join(''));
+		});
 		it('Should handle a large document correctly', function() {
 			expect('\
 				html\n\

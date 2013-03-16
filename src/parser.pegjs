@@ -56,6 +56,9 @@
 		var lines = [];
 		var step = null;
 
+		var braceDepth = 0;
+		var curlyDepth = 0;
+
 		input = input.split(/[\r\n]+/);
 
 		for (var i = 0, l = input.length; i < l; ++i) {
@@ -67,11 +70,15 @@
 
 			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
 
+			braceDepth += (line.match(/\(/g)||[]).length - (line.match(/\)/g)||[]).length;
+			curlyDepth += (line.match(/\{/g)||[]).length - (line.match(/\}/g)||[]).length;
+
 			if (step == null) {
 				step = nextIndentLevel - indentLevel;
 			}
 
-			if (/^\s+$/.test(line)) {
+			if (curlyDepth || braceDepth || /^\s+$/.test(line)) {
+				//cur = indentLevel;
 				lines.push(line);
 				continue;
 			}
@@ -118,8 +125,6 @@
 		input = lines.join('\n'); //{ // make curlies BALANCE for peg!
 		input += Array(lvl+1).join('}');
 	}());
-
-	console.log(input);
 
 } 
 

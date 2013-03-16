@@ -32,7 +32,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		_default: {
 			type: 'ATTR',
 			make: function(attrName, value) {
-				if (!value) {
+				if (value == null) {
 					return attrName;
 				}
 				return attrName + '="' + escapeHTML(value) + '"';
