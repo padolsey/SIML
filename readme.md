@@ -1,11 +1,11 @@
-# SIML
+SIML
 
 **SIML is the Simplified Markup Language.
-It is a conceptual hybrid strongly inspired by the simplicity of CSS and SASS.**
+It is a conceptual hybrid strongly inspired by the simplicity of CSS selectors SASS-style nesting.**
 
-**[Try it out here!](http://padolsey.github.com/SIML/)**
-
-**Proper documentation is in progress ([See 101 intro wiki](https://github.com/padolsey/SIML/wiki/101---Introduction))**
+ * **[Try it out here!](http://padolsey.github.com/SIML/)**
+ * [See 101 intro wiki](https://github.com/padolsey/SIML/wiki/101---Introduction)
+ * [AngularJS user? -- Look at this!](https://github.com/padolsey/SIML/wiki/AngularJS)
 
 ### Why did you make it?
 
