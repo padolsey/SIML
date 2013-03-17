@@ -129,7 +129,7 @@ That would give you:
 
 Nope. SIML has some hidden gems. Some are still being tweaked. 
 
-For example, you can use the syntax `(.../.../...)` to form an ExclusiveGroup which will make SIML form expand a hierarchy to conform to the alternates you specify:
+For example, you can use the syntax `(.../.../...)` to form an ExclusiveGroup which will make SIML expand a hierarchy to conform to the alternates you specify:
 
 ```text
 a (b/c) // <a><b></b></a><a><c></c></a>
