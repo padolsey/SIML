@@ -58,6 +58,12 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		}
 	}
 
+	var objCreate = Object.create || function (o) {
+		function F() {}
+		F.prototype = o;
+		return new F();
+	};
+
 	function isArray(a) {
 		return {}.toString.call(a) === '[object Array]';
 	}
@@ -445,7 +451,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		Element.apply(this, arguments);
 	}
 
-	RootElement.prototype = Object.create(Element.prototype);
+	RootElement.prototype = objCreate(Element.prototype);
 	RootElement.prototype.make = function(){
 		// RootElement is just an empty space
 	};
