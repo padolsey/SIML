@@ -1,4 +1,4 @@
-SIML
+# SIML
 
 **SIML is the Simplified Markup Language.
 It is a conceptual hybrid strongly inspired by the simplicity of CSS selectors and SASS-style nesting.**
