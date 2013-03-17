@@ -400,7 +400,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		processElement: function(spec) {
 			this.htmlContent.push(
-				new Parser.Element(
+				new Generator.Element(
 					spec,
 					this.config,
 					this,
@@ -428,7 +428,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		processProperty: function(type, args, overrideHTML) {
 			// type = Attribute | Directive | Pseudo
-			var property = new Parser.properties[type](
+			var property = new Generator.properties[type](
 				args,
 				this.config,
 				this,
@@ -463,24 +463,24 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		return Element.prototype.processChildren.apply(this, arguments);
 	};
 
-	function Parser(parserConfig) {
-		this.config = defaults(this.defaultConfig, parserConfig);
+	function Generator(defaultGeneratorConfig) {
+		this.config = defaults(this.defaultConfig, defaultGeneratorConfig);
 	}
 
-	Parser.escapeHTML = escapeHTML;
-	Parser.trim = trim;
-	Parser.isArray =  isArray;
+	Generator.escapeHTML = escapeHTML;
+	Generator.trim = trim;
+	Generator.isArray =  isArray;
 
-	Parser.Element = Element;
-	Parser.RootElement = RootElement;
+	Generator.Element = Element;
+	Generator.RootElement = RootElement;
 
-	Parser.properties = {
+	Generator.properties = {
 		Attribute: ConfigurablePropertyFactory('attributes', DEFAULT_ATTRIBUTES),
 		Directive: ConfigurablePropertyFactory('directives', DEFAULT_DIRECTIVES),
 		Pseudo: ConfigurablePropertyFactory('pseudos', DEFAULT_PSEUDOS)
 	};
 
-	Parser.prototype = {
+	Generator.prototype = {
 
 		defaultConfig: {
 			pretty: true,
@@ -504,6 +504,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 			if (!/^[\s\n\r]+$/.test(spec)) {
 				if (singleRunConfig.curly) {
+					// TODO: Find a nicer way of passing config to the PEGjs parser:
 					spec += '\n/*siml:curly=true*/';
 				}
 				try {
@@ -520,13 +521,13 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			}
 
 			if (spec[0] === 'Element') {
-				return new Parser.Element(
+				return new Generator.Element(
 					spec[1],
 					singleRunConfig
 				).html;
 			}
 
-			return new Parser.RootElement(
+			return new Generator.RootElement(
 				['RootElement', [['IncGroup', [spec]]]],
 				singleRunConfig
 			).html;
@@ -534,15 +535,15 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 	};
 
-	siml.Parser = Parser;
+	siml.Generator = Generator;
 
-	siml.defaultParser = new Parser({
+	siml.defaultGenerator = new Generator({
 		pretty: true,
 		indent: DEFAULT_INDENTATION
 	});
 
 	siml.parse = function(s, c) {
-		return siml.defaultParser.parse(s, c);
+		return siml.defaultGenerator.parse(s, c);
 	};
 
 }());

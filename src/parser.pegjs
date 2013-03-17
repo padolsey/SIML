@@ -277,29 +277,8 @@ Single
  */
 Element
 	= s:Selector {
-		return ['Element', [
-			s,
-			[]
-		]];
-	}/*
-	= s:Selector tail:(_ '{' MSeries? '}')? {
-
-		var mSeries = tail[2];
-
-		if (!mSeries) {
-			return ['Element', [s, []]];
-		}
-
-		if (!mSeries.length) {
-			return ['Element', [s, [], {declared:1}]];
-		}
-
-		return ['Element', [
-			s,
-			[mSeries],
-			{declared:1}
-		]];
-	}*/
+		return ['Element', [s,[]]];
+	}
 
 /**
  * Selector

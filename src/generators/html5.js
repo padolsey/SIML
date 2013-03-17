@@ -41,7 +41,7 @@
 		}
 	};
 
-	siml.html5 = new siml.Parser({
+	siml.html5 = new siml.Generator({
 		pretty: true,
 		indent: '	',
 		toTag: function(tag) {

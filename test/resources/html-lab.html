@@ -6,8 +6,8 @@
 	<script src="../../vendor/jsDump.js"></script>
 	<script src="../../vendor/peg.js"></script>
 	<script src="../../src/siml.js"></script>
-	<script src="../../src/parsers/html5.js"></script>
-	<script src="../../src/parsers/angular.js"></script>
+	<script src="../../src/generators/html5.js"></script>
+	<script src="../../src/generators/angular.js"></script>
 	<script src="buildParser.js"></script>
 	<script>buildParser('../../src/parser.pegjs')</script>
 	<style>
@@ -21,26 +21,9 @@
 
 	<script id="c" type=t>
 
-section
-    header > h1 'Hi there!'
-    p 'This is a demo of SIML'
-    p 'Try typing something...' 
-    p > small
-        '
-        Tip: Tick "Force curlies?" if you
-        wanna force SIML to parse without paying
-        attention to indentation level.
-        '
-form {
-    fieldset {
-        label {
-            for: "your-name";
-            text: "Enter something..."
-        }
-        input.something#your-name {
-            placeholder: " something ";
-        }
-    }
+label {
+  label: foo;
+  input#foo
 }
 
 // a b

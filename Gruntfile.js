@@ -29,8 +29,8 @@ module.exports = function(grunt) {
 				src: [
 					'src/intro.js',
 					'src/siml.js',
-					'src/parsers/html5.js',
-					'src/parsers/angular.js',
+					'src/generators/html5.js',
+					'src/generators/angular.js',
 					'.grunt/siml_parser.js',
 					'src/outro.js'
 				],
@@ -40,8 +40,8 @@ module.exports = function(grunt) {
 				src: [
 					'src/intro.js',
 					'src/siml.js',
-					'src/parsers/html5.js',
-					'src/parsers/angular.js',
+					'src/generators/html5.js',
+					'src/generators/angular.js',
 					'.grunt/siml_parser.js',
 					'src/outro.js'
 				],
@@ -51,7 +51,7 @@ module.exports = function(grunt) {
 				src: [
 					'src/intro.js',
 					'src/siml.js',
-					'src/parsers/html5.js',
+					'src/generators/html5.js',
 					'.grunt/siml_parser.js',
 					'src/outro.js'
 				],

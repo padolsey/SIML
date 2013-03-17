@@ -126,8 +126,8 @@ html
 
 	<script src="../../vendor/peg.js"></script>
 	<script src="../../src/siml.js"></script>
-	<script src="../../src/parsers/html5.js"></script>
-	<script src="../../src/parsers/angular.js"></script>
+	<script src="../../src/generators/html5.js"></script>
+	<script src="../../src/generators/angular.js"></script>
 	<script src="buildParser.js"></script>
 	<script>buildParser('../../src/parser.pegjs')</script>
 	<script src="../../vendor/ace/ace.js"></script>
@@ -149,11 +149,13 @@ html
 				var value = inputSession.getValue();
 				error.style.display = '';
 				error.innerHTML = '';
+				console.time('ParserTime');
 				var html = siml.html5.parse(value, {
 					curly: !!curly.checked,
 					pretty: true,
 					indent: '  '
 				});
+				console.timeEnd('ParserTime');
 				output.innerHTML = html;
 				htmlOutput.innerHTML = '';
 				htmlOutput.appendChild( document.createTextNode(html) );

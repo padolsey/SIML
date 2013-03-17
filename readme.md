@@ -84,7 +84,7 @@ section {          // Selector
 }
 ```
 
-*Note: You can extend SIML to support your own attributes, directives and psuedo-classes. For an example see [parsers/angular.js](https://github.com/padolsey/siml/blob/master/src/parsers/angular.js)*
+*Note: You can extend SIML to support your own attributes, directives and psuedo-classes. For an example see [generators/angular.js](https://github.com/padolsey/siml/blob/master/src/generators/angular.js)*
 
 SIML allows you to express more with less effort and, perhaps, more clarity:
 
@@ -177,7 +177,7 @@ Becomes:
 
 ### SIML's Extensibility
 
-SIML allows you to make your own SIML parser by configuring:
+SIML allows you to make your own SIML generator by configuring:
 
  * Attribute handlers
  * Directive handlers
@@ -185,7 +185,7 @@ SIML allows you to make your own SIML parser by configuring:
 
 This means, with a bit of configuration, you can write custom markup for your bespoke need. E.g.
 
-*This uses the [angular parser](https://github.com/padolsey/siml/blob/master/src/parsers/angular.js) which converts directives and undefined pseudo-classes to `ng-` attributes.*
+*This uses the [angular generator](https://github.com/padolsey/siml/blob/master/src/generators/angular.js) which converts directives and undefined pseudo-classes to `ng-` attributes.*
 
 ```text
 ul#todo-list > li
@@ -211,9 +211,9 @@ This would become:
 
 ### Distributions
 
- * `dist/siml.js`: This is the default parser. No fancy stuff. Not even `input:checkbox` support.
+ * `dist/siml.js`: This is the default generator. No fancy stuff. Not even `input:checkbox` support.
  * `dist/siml.html5.js`: For now, this includes small things like `doctype()` support and `input:type` suppport.
- * `dist/siml.angular.js`: This is the angular parser, which makes it easier to write `ng-...` attributes with directives/pseudo-classes. ([Example here](https://github.com/padolsey/siml/blob/master/test/resources/angular-test.siml)). *Currently also includes `input:type` support*.
+ * `dist/siml.angular.js`: This is the angular generator, which makes it easier to write `ng-...` attributes with directives/pseudo-classes. ([Example here](https://github.com/padolsey/siml/blob/master/test/resources/angular-test.siml)). *Currently also includes `input:type` support*.
  * `dist/siml.all.js`: This includes html5 and angular.
 
 ### How to use:
@@ -246,7 +246,7 @@ npm install siml
 ```js
 var siml = require('siml');
 
-// Using the html5 parser (e.g. to support :checkbox)
+// Using the html5 generator (e.g. to support :checkbox)
 siml.html5.parse('input:checkbox'; // => '<input type="checkbox" />'
 ```
 
@@ -254,10 +254,13 @@ More to come...
 
 ## CHANGELOG
 
- * 0.2.0 Introduced single line macro-type selectors and quick-tags (vowelless) as part of the HTML5 parser, e.g. `html hd{meta[charset=utf-8]+title{'Cool'}} bdy`
+ * 0.2.0 Introduced single line macro-type selectors and quick-tags (vowelless) as part of the HTML5 generator, e.g. `html hd{meta[charset=utf-8]+title{'Cool'}} bdy`
  * 0.2.1 Various features added
  * 0.3.0
   * Many optimisations to prevent pointless backtracking in the parser
   * Refactor of parser components.
   * Introduction of ExclusiveGroups (`(a/b)`) and InclusiveGroups (`a+b,d`)
   * Improvement of specs
+ * 0.3.1
+  * Using Object.create shim (not exposed though)
+  * Changed naming of customisable Parsers to "Generators" (makes more sense)

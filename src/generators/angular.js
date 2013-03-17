@@ -1,4 +1,4 @@
-siml.angular = new siml.Parser({
+siml.angular = new siml.Generator({
 	pretty: true,
 	toTag: siml.html5.config.toTag,
 	directives: {
@@ -14,7 +14,7 @@ siml.angular = new siml.Parser({
 				} else {
 					name = 'ng-' + name;
 				}
-				return name + '="' + siml.Parser.escapeHTML(value) + '"';
+				return name + '="' + siml.Generator.escapeHTML(value) + '"';
 			}
 		}
 	},
