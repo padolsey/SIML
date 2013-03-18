@@ -150,7 +150,7 @@ html
 				error.style.display = '';
 				error.innerHTML = '';
 				console.time('ParserTime');
-				var html = siml.html5.parse(value, {
+				var html = siml.angular.parse(value, {
 					curly: !!curly.checked,
 					pretty: true,
 					indent: '  '

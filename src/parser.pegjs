@@ -54,6 +54,7 @@
 		var cur;
 		var lvl = 0;
 		var lines = [];
+		var blockedFromClosing = {};
 		var step = null;
 
 		var braceDepth = 0;
@@ -70,28 +71,17 @@
 
 			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
 
-			braceDepth += (line.match(/\(/g)||[]).length - (line.match(/\)/g)||[]).length;
-			curlyDepth += (line.match(/\{/g)||[]).length - (line.match(/\}/g)||[]).length;
-
 			if (step == null) {
 				step = nextIndentLevel - indentLevel;
 			}
 
-			if (curlyDepth || braceDepth || /^\s+$/.test(line)) {
-				//cur = indentLevel;
+			braceDepth += (line.match(/\(/g)||[]).length - (line.match(/\)/g)||[]).length;
+			curlyDepth += (line.match(/\{/g)||[]).length - (line.match(/\}/g)||[]).length;
+
+			if (/^\s*$/.test(line)) {
 				lines.push(line);
 				continue;
 			}
-
-			// Test for a non selector at start of line:
-			if (!/^\s*%%__STRING_TOKEN___%%/.test(line) && !/^\s*[A-Za-z0-9-_#.]+\s*(?:>\s*[A-Za-z0-9-_#.]+)*/.test(line)) {
-				cur = indentLevel;
-				// Exit, we're not interested in attributes, directives [anything that's not a selector/string]
-				lines.push(line);
-				continue;
-			}
-
-			line = line.substring(indent.length);
 
 			if (indentLevel < cur) { // dedent
 				var diff = cur - indentLevel;
@@ -100,10 +90,22 @@
 					if (lvl === 0 || diff < 0) {
 						break;
 					}
+					if (blockedFromClosing[i-1]) {
+						continue;
+					}
 					lvl--;
 					lines[i-1] += '}';
 				}
 			}
+
+			if (curlyDepth || braceDepth) {
+				// Lines within a curly/brace nesting are blocked from future '}' closes
+				blockedFromClosing[i] = 1;
+				lines.push(line);
+				continue;
+			}
+
+			line = line.substring(indent.length);
 
 			// Don't seek to add curlies to places where curlies already exist:
 			if (/[{}]\s*$/.test(line)) {
@@ -122,7 +124,7 @@
 
 		}
 
-		input = lines.join('\n'); //{ // make curlies BALANCE for peg!
+		input = lines.join('\n'); //{{ // make curlies BALANCE for peg!
 		input += Array(lvl+1).join('}');
 	}());
 
@@ -146,20 +148,15 @@ MSeries
 
 		var all = [];
 
-		if (head[0] === 'Element' && !body.length) {
-			//if (!body.length) {
-				return head;
-			//}
-		} else {
+		if (head[0] !== 'Element' || body.length) {
 			head = ['IncGroup', [head]];
 		}
 
-		//body.unshift([,head]);
 		for (var i = 0, l = body.length; i < l; ++i) {
 			head[1].push(body[i][1]);
 		}
+
 		return head;
-		//return ['IncGroup', all];
 	}
 
 /**
@@ -177,7 +174,7 @@ CSeries
  * LSeries --  A single line series of Singles
  */
 LSeries
-	= singleA:Single tail:([> \t+]* LSeries)? _ decl:Declaration? {
+	= singleA:Single tail:([> \t+]* LSeries)? _ decl:ChildrenDeclaration? {
 
 		var seperator = tail[0] && tail[0].join('');
 		var singleB = tail[1];
@@ -253,12 +250,12 @@ LSeries
 	}
 
 ExcGroupRHS
-	= Declaration
+	= ChildrenDeclaration
 	/ separator:[> \t+]* tail:LSeries {
 		return [tail, separator];
 	}
 
-Declaration
+ChildrenDeclaration
 	= '{' c:MSeries? '}' {
 		return ['Declaration', [c]];
 	}
@@ -320,7 +317,9 @@ selectorPseudo
 	= ':' !string t:[a-z0-9-_$]i+ arg:braced?  {
 		return ['Pseudo', [
 			t.join(''),
-			arg && arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')
+			[
+				arg && arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')
+			]
 		]];
 	}
 
@@ -333,7 +332,7 @@ selectorAttrValue
  */
 Text
 	= s:string {
-		return ['Directive', ['_fillText', s]];
+		return ['Directive', ['_fillText', [s], []]];
 	}
 
 /**
@@ -341,13 +340,13 @@ Text
  */
 Attribute
 	= name:attributeName _ ":" _ value:value _ ";" {
-		return ['Attribute', [name, value]];
+		return ['Attribute', [name, [value]]];
 	}
 	/ name:attributeName _ ":" _ value:string {
-		return ['Attribute', [name, value]];
+		return ['Attribute', [name, [value]]];
 	}
 	/ name:attributeName _ ":" [ \t] value:value { // explicit space
-		return ['Attribute', [name, value]];
+		return ['Attribute', [name, [value]]];
 	}
 
 attributeName "AttributeName"
@@ -358,20 +357,37 @@ attributeName "AttributeName"
  * Directive
  */
 Directive "Directive"
-	= name:directiveName "(" args:arrayElements? ")" {
-		return ['Directive', [name, args.length ? args : null]];
+	= name:DirectiveName args:DirectiveArguments? children:DirectiveChildren? {
+		return ['Directive', [
+			name,
+			args || [],
+			children || []
+		]];
 	}
-	/ name:directiveName arg:braced {
+
+DirectiveName
+	= '@' a:[a-zA-Z_$] b:[a-zA-Z0-9$_]* { return a+b.join(''); }
+
+DirectiveArguments
+	= "(" args:arrayElements? ")" {
+		return args;
+	}
+	/ arg:braced {
 		return [
-			'Directive',
-			[name, [
-				arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')
-			]]
+			arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')
 		];
 	}
 
-directiveName "DirectiveName"
-	= '@' a:[a-zA-Z_$] b:[a-zA-Z0-9$_]* { return a+b.join(''); }
+DirectiveChildren
+	= ';' {
+		return [];
+	}
+	/ _ '{' c:MSeries? '}' {
+		return [c];
+	}
+	/ [> \t]* tail:LSeries {
+		return [tail];
+	}
 
 braced
   = "(" parts:(braced / nonBraceCharacter)* ")" {

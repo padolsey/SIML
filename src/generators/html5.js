@@ -49,13 +49,25 @@
 		},
 		directives: {
 			doctype: doctypeDirective,
-			dt: doctypeDirective
+			dt: doctypeDirective,
+			foo: {
+					type: 'CONTENT',
+					make: function(name, children/*, args */) {
+						this.parentElement.htmlContent.push(
+							'<foo>' + [].slice.call(arguments, 2).join()
+						);
+						if (children.length) {
+							this.parentElement.processChildren(children);
+						}
+						this.parentElement.htmlContent.push('</foo>');
+					}
+			}
 		},
 		pseudos: {
 			_default: {
 				type: 'ATTR',
 				make: function(name) {
-					if (this.parentElement.tag === 'input' && name in INPUT_TYPES) {
+					if (this.parentElement.tag === 'input' && INPUT_TYPES.hasOwnProperty(name)) {
 						return 'type="' + name + '"';
 					}
 					throw new Error('Unknown Pseduo: ' + name);

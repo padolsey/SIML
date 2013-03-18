@@ -35,7 +35,7 @@ describe('DefaultParser: HTML Generation', function() {
 			expect('foo { "Look: " span "HERE!" }').toGenerate('<foo>Look: <span>HERE!</span></foo>');
 			expect('foo { "Look: " span{} "HERE!" }').toGenerate('<foo>Look: <span></span>HERE!</foo>');
 			expect('a "b" c "d"').toGenerate('<a>b<c>d</c></a>');
-			expect('   a { @_fillText("foo") @_fillText("baz") "  " em }  ').toGenerate('<a>foobaz  <em></em></a>');
+			expect('   a { @_fillText("foo"); @_fillText("baz"); "  " em }  ').toGenerate('<a>foobaz  <em></em></a>');
 		});
 	});
 
@@ -258,6 +258,34 @@ describe('DefaultParser: HTML Generation', function() {
 						'</m>',
 					'</a>',
 				'</body>'
+			].join(''));
+		});
+		it('Should handle inner-brace case #2', function() {
+			expect('\
+html\n\
+    head\n\
+        meta\n\
+        title\n\
+    body\n\
+        section\n\
+            h1 \'ok\'\n\
+        p (\n\
+            \'a\'/\'b\'\n\
+        )\n\
+			').toGenerate([
+				'<html>',
+					'<head>',
+						'<meta/>',
+						'<title></title>',
+					'</head>',
+					'<body>',
+						'<section>',
+							'<h1>ok</h1>',
+						'</section>',
+						'<p>a</p>',
+						'<p>b</p>',
+					'</body>',
+				'</html>'
 			].join(''));
 		});
 		it('Should handle a large document correctly', function() {

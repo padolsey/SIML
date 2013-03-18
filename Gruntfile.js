@@ -1,8 +1,22 @@
+var path = require('path');
+var fs = require('fs');
+
+var VERSION = fs.readFileSync(path.join(__dirname, 'VERSION'), 'utf-8');
+
+var FULL_BANNER = [
+	'/**',
+	' * SIML (c) James Padolsey 2013',
+	' * @version ' + VERSION,
+	' * @license https://github.com/padolsey/SIML/blob/master/LICENSE-MIT',
+	' * @info http://github.com/padolsey/SIML',
+	' */'
+].join('\n') + '\n';
+
+var MIN_BANNER = '/** SIML v' + VERSION + ' (c) 2013 James padolsey, MIT-licensed, http://github.com/padolsey/SIML **/\n';
+
 module.exports = function(grunt) {
 
 	'use strict';
-
-	var fs = require('fs');
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
@@ -16,6 +30,9 @@ module.exports = function(grunt) {
 			}
 		},
 		concat: {
+			options: {
+				banner: FULL_BANNER
+			},
 			'default': {
 				src: [
 					'src/intro.js',
@@ -60,7 +77,7 @@ module.exports = function(grunt) {
 		},
 		uglify: {
 			options: {
-				banner: '/** SIML (c) 2013 James padolsey, http://github.com/padolsey/SIML **/\n',
+				banner: MIN_BANNER,
 				compress: true,
 				mangle: true
 			},

@@ -1,6 +1,8 @@
 /**
  * SIML (c) James Padolsey 2013
- * http://github.com/padolsey/SIML
+ * @version 0.3.2dev
+ * @license https://github.com/padolsey/SIML/blob/master/LICENSE-MIT
+ * @info http://github.com/padolsey/SIML
  */
 (function() {
 
@@ -22,14 +24,14 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	var DEFAULT_DIRECTIVES = {
 		_fillText: {
 			type: 'CONTENT',
-			make: function(_, t) {
+			make: function(_, children, t) {
 				return escapeHTML(t);
 			}
 		},
 		_default: {
 			type: 'CONTENT',
 			make: function(dir) {
-				throw new Error('Directive not resolvable: ' + dir);
+				throw new Error('SIML: Directive not resolvable: ' + dir);
 			}
 		}
 	};
@@ -106,19 +108,28 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			this.indentation = indentation;
 
 			args = [].slice.call(args);
-			var dName = args[0];
 
-			var propMaker = config[methodRepoName][dName] || fallbackMethodRepo[dName];
+			var propName = args[0];
+			var propArguments = args[1];
+			var propChildren = args[2];
+
+			if (propChildren) {
+				propArguments.unshift(propChildren);
+			}
+
+			propArguments.unshift(propName);
+
+			var propMaker = config[methodRepoName][propName] || fallbackMethodRepo[propName];
 			if (!propMaker) {
 				propMaker = config[methodRepoName]._default || fallbackMethodRepo._default;
 			}
 
 			if  (!propMaker) {
-				throw new Error('No fallback for' + args.join(''));
+				throw new Error('SIML: No fallback for' + args.join());
 			}
 
 			this.type = propMaker.type;
-			this.html = propMaker.make.apply(this, args);
+			this.html = propMaker.make.apply(this, propArguments) || '';
 
 		};
 	}
@@ -173,7 +184,11 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 					case 'Id':
 						this.id = selectorPortion; break;
 					case 'Attr':
-						this.attrs.push(selectorPortion); break;
+						this.attrs.push([
+							selectorPortion[0],
+							[selectorPortion[1]]
+						]);
+						break;
 					case 'Class':
 						this.classes.push(selectorPortion); break;
 					case 'Pseudo':
@@ -395,7 +410,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 					} else if (childType === 'IncGroup') {
 						this.processIncGroup(children[i][1]);
 					} else if (childType === 'ExcGroup') {
-						throw new Error('siml: Found ExcGroup in unexpected location');
+						throw new Error('SIML: Found ExcGroup in unexpected location');
 					} else {
 						this.processProperty(childType, children[i][1]);
 					}
@@ -419,20 +434,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			this.processChildren(spec);
 		},
 
-		processExcGroup: function(spec) {
-			for (var i = 0, l = spec.length; i < l; ++i) {
-				var type = children[i][0];
-				if (type === 'Element') {
-					this.processElement(children[i][1]);
-				} else if (type === 'IncGroup') {
-					this.processIncGroup(children[i][1]);
-				} else {
-					this.processProperty(type, children[i][1], 'EXC_TOKEN');
-				}
-			}
-		},
-
-		processProperty: function(type, args, overrideHTML) {
+		processProperty: function(type, args) {
 			// type = Attribute | Directive | Pseudo
 			var property = new Generator.properties[type](
 				args,
@@ -443,10 +445,14 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			if (property.html) {
 				switch (property.type) {
 					case 'ATTR':
-						this.htmlAttributes.push(overrideHTML || property.html);
+						if (property.html) {
+							this.htmlAttributes.push(property.html);
+						}
 						break;
 					case 'CONTENT':
-						this.htmlContent.push(overrideHTML || this.indentation + this.defaultIndentation + property.html);
+						if (property.html) {
+							this.htmlContent.push(this.indentation + this.defaultIndentation + property.html);
+						}
 						break;
 				}
 			}
@@ -605,13 +611,25 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		},
 		directives: {
 			doctype: doctypeDirective,
-			dt: doctypeDirective
+			dt: doctypeDirective,
+			foo: {
+					type: 'CONTENT',
+					make: function(name, children/*, args */) {
+						this.parentElement.htmlContent.push(
+							'<foo>' + [].slice.call(arguments, 2).join()
+						);
+						if (children.length) {
+							this.parentElement.processChildren(children);
+						}
+						this.parentElement.htmlContent.push('</foo>');
+					}
+			}
 		},
 		pseudos: {
 			_default: {
 				type: 'ATTR',
 				make: function(name) {
-					if (this.parentElement.tag === 'input' && name in INPUT_TYPES) {
+					if (this.parentElement.tag === 'input' && INPUT_TYPES.hasOwnProperty(name)) {
 						return 'type="' + name + '"';
 					}
 					throw new Error('Unknown Pseduo: ' + name);
@@ -669,7 +687,7 @@ siml.PARSER = (function(){
         "CSeries": parse_CSeries,
         "LSeries": parse_LSeries,
         "ExcGroupRHS": parse_ExcGroupRHS,
-        "Declaration": parse_Declaration,
+        "ChildrenDeclaration": parse_ChildrenDeclaration,
         "Single": parse_Single,
         "Element": parse_Element,
         "singleSelector": parse_singleSelector,
@@ -683,7 +701,9 @@ siml.PARSER = (function(){
         "Attribute": parse_Attribute,
         "attributeName": parse_attributeName,
         "Directive": parse_Directive,
-        "directiveName": parse_directiveName,
+        "DirectiveName": parse_DirectiveName,
+        "DirectiveArguments": parse_DirectiveArguments,
+        "DirectiveChildren": parse_DirectiveChildren,
         "braced": parse_braced,
         "nonBraceCharacters": parse_nonBraceCharacters,
         "nonBraceCharacter": parse_nonBraceCharacter,
@@ -899,20 +919,15 @@ siml.PARSER = (function(){
         
         		var all = [];
         
-        		if (head[0] === 'Element' && !body.length) {
-        			//if (!body.length) {
-        				return head;
-        			//}
-        		} else {
+        		if (head[0] !== 'Element' || body.length) {
         			head = ['IncGroup', [head]];
         		}
         
-        		//body.unshift([,head]);
         		for (var i = 0, l = body.length; i < l; ++i) {
         			head[1].push(body[i][1]);
         		}
+        
         		return head;
-        		//return ['IncGroup', all];
         	})(pos0.offset, pos0.line, pos0.column, result0[1], result0[2]);
         }
         if (result0 === null) {
@@ -1035,7 +1050,7 @@ siml.PARSER = (function(){
           if (result1 !== null) {
             result2 = parse__();
             if (result2 !== null) {
-              result3 = parse_Declaration();
+              result3 = parse_ChildrenDeclaration();
               result3 = result3 !== null ? result3 : "";
               if (result3 !== null) {
                 result0 = [result0, result1, result2, result3];
@@ -1298,7 +1313,7 @@ siml.PARSER = (function(){
         var result0, result1;
         var pos0, pos1;
         
-        result0 = parse_Declaration();
+        result0 = parse_ChildrenDeclaration();
         if (result0 === null) {
           pos0 = clone(pos);
           pos1 = clone(pos);
@@ -1348,7 +1363,7 @@ siml.PARSER = (function(){
         return result0;
       }
       
-      function parse_Declaration() {
+      function parse_ChildrenDeclaration() {
         var result0, result1, result2;
         var pos0, pos1;
         
@@ -1793,7 +1808,9 @@ siml.PARSER = (function(){
           result0 = (function(offset, line, column, t, arg) {
         		return ['Pseudo', [
         			t.join(''),
-        			arg && arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')
+        			[
+        				arg && arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')
+        			]
         		]];
         	})(pos0.offset, pos0.line, pos0.column, result0[2], result0[3]);
         }
@@ -1861,7 +1878,7 @@ siml.PARSER = (function(){
         result0 = parse_string();
         if (result0 !== null) {
           result0 = (function(offset, line, column, s) {
-        		return ['Directive', ['_fillText', s]];
+        		return ['Directive', ['_fillText', [s], []]];
         	})(pos0.offset, pos0.line, pos0.column, result0);
         }
         if (result0 === null) {
@@ -1937,7 +1954,7 @@ siml.PARSER = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, line, column, name, value) {
-        		return ['Attribute', [name, value]];
+        		return ['Attribute', [name, [value]]];
         	})(pos0.offset, pos0.line, pos0.column, result0[0], result0[4]);
         }
         if (result0 === null) {
@@ -1987,7 +2004,7 @@ siml.PARSER = (function(){
           }
           if (result0 !== null) {
             result0 = (function(offset, line, column, name, value) {
-          		return ['Attribute', [name, value]];
+          		return ['Attribute', [name, [value]]];
           	})(pos0.offset, pos0.line, pos0.column, result0[0], result0[4]);
           }
           if (result0 === null) {
@@ -2045,7 +2062,7 @@ siml.PARSER = (function(){
             }
             if (result0 !== null) {
               result0 = (function(offset, line, column, name, value) { // explicit space
-            		return ['Attribute', [name, value]];
+            		return ['Attribute', [name, [value]]];
             	})(pos0.offset, pos0.line, pos0.column, result0[0], result0[4]);
             }
             if (result0 === null) {
@@ -2105,42 +2122,21 @@ siml.PARSER = (function(){
       }
       
       function parse_Directive() {
-        var result0, result1, result2, result3;
+        var result0, result1, result2;
         var pos0, pos1;
         
         reportFailures++;
         pos0 = clone(pos);
         pos1 = clone(pos);
-        result0 = parse_directiveName();
+        result0 = parse_DirectiveName();
         if (result0 !== null) {
-          if (input.charCodeAt(pos.offset) === 40) {
-            result1 = "(";
-            advance(pos, 1);
-          } else {
-            result1 = null;
-            if (reportFailures === 0) {
-              matchFailed("\"(\"");
-            }
-          }
+          result1 = parse_DirectiveArguments();
+          result1 = result1 !== null ? result1 : "";
           if (result1 !== null) {
-            result2 = parse_arrayElements();
+            result2 = parse_DirectiveChildren();
             result2 = result2 !== null ? result2 : "";
             if (result2 !== null) {
-              if (input.charCodeAt(pos.offset) === 41) {
-                result3 = ")";
-                advance(pos, 1);
-              } else {
-                result3 = null;
-                if (reportFailures === 0) {
-                  matchFailed("\")\"");
-                }
-              }
-              if (result3 !== null) {
-                result0 = [result0, result1, result2, result3];
-              } else {
-                result0 = null;
-                pos = clone(pos1);
-              }
+              result0 = [result0, result1, result2];
             } else {
               result0 = null;
               pos = clone(pos1);
@@ -2154,42 +2150,16 @@ siml.PARSER = (function(){
           pos = clone(pos1);
         }
         if (result0 !== null) {
-          result0 = (function(offset, line, column, name, args) {
-        		return ['Directive', [name, args.length ? args : null]];
-        	})(pos0.offset, pos0.line, pos0.column, result0[0], result0[2]);
+          result0 = (function(offset, line, column, name, args, children) {
+        		return ['Directive', [
+        			name,
+        			args || [],
+        			children || []
+        		]];
+        	})(pos0.offset, pos0.line, pos0.column, result0[0], result0[1], result0[2]);
         }
         if (result0 === null) {
           pos = clone(pos0);
-        }
-        if (result0 === null) {
-          pos0 = clone(pos);
-          pos1 = clone(pos);
-          result0 = parse_directiveName();
-          if (result0 !== null) {
-            result1 = parse_braced();
-            if (result1 !== null) {
-              result0 = [result0, result1];
-            } else {
-              result0 = null;
-              pos = clone(pos1);
-            }
-          } else {
-            result0 = null;
-            pos = clone(pos1);
-          }
-          if (result0 !== null) {
-            result0 = (function(offset, line, column, name, arg) {
-          		return [
-          			'Directive',
-          			[name, [
-          				arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')
-          			]]
-          		];
-          	})(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
-          }
-          if (result0 === null) {
-            pos = clone(pos0);
-          }
         }
         reportFailures--;
         if (reportFailures === 0 && result0 === null) {
@@ -2198,11 +2168,10 @@ siml.PARSER = (function(){
         return result0;
       }
       
-      function parse_directiveName() {
+      function parse_DirectiveName() {
         var result0, result1, result2, result3;
         var pos0, pos1;
         
-        reportFailures++;
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (input.charCodeAt(pos.offset) === 64) {
@@ -2267,9 +2236,197 @@ siml.PARSER = (function(){
         if (result0 === null) {
           pos = clone(pos0);
         }
-        reportFailures--;
-        if (reportFailures === 0 && result0 === null) {
-          matchFailed("DirectiveName");
+        return result0;
+      }
+      
+      function parse_DirectiveArguments() {
+        var result0, result1, result2;
+        var pos0, pos1;
+        
+        pos0 = clone(pos);
+        pos1 = clone(pos);
+        if (input.charCodeAt(pos.offset) === 40) {
+          result0 = "(";
+          advance(pos, 1);
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\"(\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse_arrayElements();
+          result1 = result1 !== null ? result1 : "";
+          if (result1 !== null) {
+            if (input.charCodeAt(pos.offset) === 41) {
+              result2 = ")";
+              advance(pos, 1);
+            } else {
+              result2 = null;
+              if (reportFailures === 0) {
+                matchFailed("\")\"");
+              }
+            }
+            if (result2 !== null) {
+              result0 = [result0, result1, result2];
+            } else {
+              result0 = null;
+              pos = clone(pos1);
+            }
+          } else {
+            result0 = null;
+            pos = clone(pos1);
+          }
+        } else {
+          result0 = null;
+          pos = clone(pos1);
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, line, column, args) {
+        		return args;
+        	})(pos0.offset, pos0.line, pos0.column, result0[1]);
+        }
+        if (result0 === null) {
+          pos = clone(pos0);
+        }
+        if (result0 === null) {
+          pos0 = clone(pos);
+          result0 = parse_braced();
+          if (result0 !== null) {
+            result0 = (function(offset, line, column, arg) {
+          		return [
+          			arg.substr(1, arg.length-2).replace(/[\s\r\n]+/g, ' ').replace(/^\s\s*|\s\s*$/g, '')
+          		];
+          	})(pos0.offset, pos0.line, pos0.column, result0);
+          }
+          if (result0 === null) {
+            pos = clone(pos0);
+          }
+        }
+        return result0;
+      }
+      
+      function parse_DirectiveChildren() {
+        var result0, result1, result2, result3;
+        var pos0, pos1;
+        
+        pos0 = clone(pos);
+        if (input.charCodeAt(pos.offset) === 59) {
+          result0 = ";";
+          advance(pos, 1);
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\";\"");
+          }
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, line, column) {
+        		return [];
+        	})(pos0.offset, pos0.line, pos0.column);
+        }
+        if (result0 === null) {
+          pos = clone(pos0);
+        }
+        if (result0 === null) {
+          pos0 = clone(pos);
+          pos1 = clone(pos);
+          result0 = parse__();
+          if (result0 !== null) {
+            if (input.charCodeAt(pos.offset) === 123) {
+              result1 = "{";
+              advance(pos, 1);
+            } else {
+              result1 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"{\"");
+              }
+            }
+            if (result1 !== null) {
+              result2 = parse_MSeries();
+              result2 = result2 !== null ? result2 : "";
+              if (result2 !== null) {
+                if (input.charCodeAt(pos.offset) === 125) {
+                  result3 = "}";
+                  advance(pos, 1);
+                } else {
+                  result3 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("\"}\"");
+                  }
+                }
+                if (result3 !== null) {
+                  result0 = [result0, result1, result2, result3];
+                } else {
+                  result0 = null;
+                  pos = clone(pos1);
+                }
+              } else {
+                result0 = null;
+                pos = clone(pos1);
+              }
+            } else {
+              result0 = null;
+              pos = clone(pos1);
+            }
+          } else {
+            result0 = null;
+            pos = clone(pos1);
+          }
+          if (result0 !== null) {
+            result0 = (function(offset, line, column, c) {
+          		return [c];
+          	})(pos0.offset, pos0.line, pos0.column, result0[2]);
+          }
+          if (result0 === null) {
+            pos = clone(pos0);
+          }
+          if (result0 === null) {
+            pos0 = clone(pos);
+            pos1 = clone(pos);
+            result0 = [];
+            if (/^[> \t]/.test(input.charAt(pos.offset))) {
+              result1 = input.charAt(pos.offset);
+              advance(pos, 1);
+            } else {
+              result1 = null;
+              if (reportFailures === 0) {
+                matchFailed("[> \\t]");
+              }
+            }
+            while (result1 !== null) {
+              result0.push(result1);
+              if (/^[> \t]/.test(input.charAt(pos.offset))) {
+                result1 = input.charAt(pos.offset);
+                advance(pos, 1);
+              } else {
+                result1 = null;
+                if (reportFailures === 0) {
+                  matchFailed("[> \\t]");
+                }
+              }
+            }
+            if (result0 !== null) {
+              result1 = parse_LSeries();
+              if (result1 !== null) {
+                result0 = [result0, result1];
+              } else {
+                result0 = null;
+                pos = clone(pos1);
+              }
+            } else {
+              result0 = null;
+              pos = clone(pos1);
+            }
+            if (result0 !== null) {
+              result0 = (function(offset, line, column, tail) {
+            		return [tail];
+            	})(pos0.offset, pos0.line, pos0.column, result0[1]);
+            }
+            if (result0 === null) {
+              pos = clone(pos0);
+            }
+          }
         }
         return result0;
       }
@@ -3162,6 +3319,7 @@ siml.PARSER = (function(){
       		var cur;
       		var lvl = 0;
       		var lines = [];
+      		var blockedFromClosing = {};
       		var step = null;
       
       		var braceDepth = 0;
@@ -3178,28 +3336,17 @@ siml.PARSER = (function(){
       
       			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
       
-      			braceDepth += (line.match(/\(/g)||[]).length - (line.match(/\)/g)||[]).length;
-      			curlyDepth += (line.match(/\{/g)||[]).length - (line.match(/\}/g)||[]).length;
-      
       			if (step == null) {
       				step = nextIndentLevel - indentLevel;
       			}
       
-      			if (curlyDepth || braceDepth || /^\s+$/.test(line)) {
-      				//cur = indentLevel;
+      			braceDepth += (line.match(/\(/g)||[]).length - (line.match(/\)/g)||[]).length;
+      			curlyDepth += (line.match(/\{/g)||[]).length - (line.match(/\}/g)||[]).length;
+      
+      			if (/^\s*$/.test(line)) {
       				lines.push(line);
       				continue;
       			}
-      
-      			// Test for a non selector at start of line:
-      			if (!/^\s*%%__STRING_TOKEN___%%/.test(line) && !/^\s*[A-Za-z0-9-_#.]+\s*(?:>\s*[A-Za-z0-9-_#.]+)*/.test(line)) {
-      				cur = indentLevel;
-      				// Exit, we're not interested in attributes, directives [anything that's not a selector/string]
-      				lines.push(line);
-      				continue;
-      			}
-      
-      			line = line.substring(indent.length);
       
       			if (indentLevel < cur) { // dedent
       				var diff = cur - indentLevel;
@@ -3208,10 +3355,22 @@ siml.PARSER = (function(){
       					if (lvl === 0 || diff < 0) {
       						break;
       					}
+      					if (blockedFromClosing[i-1]) {
+      						continue;
+      					}
       					lvl--;
       					lines[i-1] += '}';
       				}
       			}
+      
+      			if (curlyDepth || braceDepth) {
+      				// Lines within a curly/brace nesting are blocked from future '}' closes
+      				blockedFromClosing[i] = 1;
+      				lines.push(line);
+      				continue;
+      			}
+      
+      			line = line.substring(indent.length);
       
       			// Don't seek to add curlies to places where curlies already exist:
       			if (/[{}]\s*$/.test(line)) {
@@ -3230,7 +3389,7 @@ siml.PARSER = (function(){
       
       		}
       
-      		input = lines.join('\n'); //{ // make curlies BALANCE for peg!
+      		input = lines.join('\n'); //{{ // make curlies BALANCE for peg!
       		input += Array(lvl+1).join('}');
       	}());
       

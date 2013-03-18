@@ -16,14 +16,14 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	var DEFAULT_DIRECTIVES = {
 		_fillText: {
 			type: 'CONTENT',
-			make: function(_, t) {
+			make: function(_, children, t) {
 				return escapeHTML(t);
 			}
 		},
 		_default: {
 			type: 'CONTENT',
 			make: function(dir) {
-				throw new Error('Directive not resolvable: ' + dir);
+				throw new Error('SIML: Directive not resolvable: ' + dir);
 			}
 		}
 	};
@@ -100,19 +100,28 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			this.indentation = indentation;
 
 			args = [].slice.call(args);
-			var dName = args[0];
 
-			var propMaker = config[methodRepoName][dName] || fallbackMethodRepo[dName];
+			var propName = args[0];
+			var propArguments = args[1];
+			var propChildren = args[2];
+
+			if (propChildren) {
+				propArguments.unshift(propChildren);
+			}
+
+			propArguments.unshift(propName);
+
+			var propMaker = config[methodRepoName][propName] || fallbackMethodRepo[propName];
 			if (!propMaker) {
 				propMaker = config[methodRepoName]._default || fallbackMethodRepo._default;
 			}
 
 			if  (!propMaker) {
-				throw new Error('No fallback for' + args.join(''));
+				throw new Error('SIML: No fallback for' + args.join());
 			}
 
 			this.type = propMaker.type;
-			this.html = propMaker.make.apply(this, args);
+			this.html = propMaker.make.apply(this, propArguments) || '';
 
 		};
 	}
@@ -167,7 +176,11 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 					case 'Id':
 						this.id = selectorPortion; break;
 					case 'Attr':
-						this.attrs.push(selectorPortion); break;
+						this.attrs.push([
+							selectorPortion[0],
+							[selectorPortion[1]]
+						]);
+						break;
 					case 'Class':
 						this.classes.push(selectorPortion); break;
 					case 'Pseudo':
@@ -389,7 +402,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 					} else if (childType === 'IncGroup') {
 						this.processIncGroup(children[i][1]);
 					} else if (childType === 'ExcGroup') {
-						throw new Error('siml: Found ExcGroup in unexpected location');
+						throw new Error('SIML: Found ExcGroup in unexpected location');
 					} else {
 						this.processProperty(childType, children[i][1]);
 					}
@@ -413,20 +426,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			this.processChildren(spec);
 		},
 
-		processExcGroup: function(spec) {
-			for (var i = 0, l = spec.length; i < l; ++i) {
-				var type = children[i][0];
-				if (type === 'Element') {
-					this.processElement(children[i][1]);
-				} else if (type === 'IncGroup') {
-					this.processIncGroup(children[i][1]);
-				} else {
-					this.processProperty(type, children[i][1], 'EXC_TOKEN');
-				}
-			}
-		},
-
-		processProperty: function(type, args, overrideHTML) {
+		processProperty: function(type, args) {
 			// type = Attribute | Directive | Pseudo
 			var property = new Generator.properties[type](
 				args,
@@ -437,10 +437,14 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			if (property.html) {
 				switch (property.type) {
 					case 'ATTR':
-						this.htmlAttributes.push(overrideHTML || property.html);
+						if (property.html) {
+							this.htmlAttributes.push(property.html);
+						}
 						break;
 					case 'CONTENT':
-						this.htmlContent.push(overrideHTML || this.indentation + this.defaultIndentation + property.html);
+						if (property.html) {
+							this.htmlContent.push(this.indentation + this.defaultIndentation + property.html);
+						}
 						break;
 				}
 			}

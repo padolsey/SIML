@@ -4,7 +4,7 @@ siml.angular = new siml.Generator({
 	directives: {
 		_default: {
 			type: 'ATTR',
-			make: function(name, value) {
+			make: function(name, children, value) {
 				// camelCase -> snake-case
 				name = name.replace(/([a-z])([A-Z])/g, function($0,$1,$2) {
 					return $1 + '-' + $2.toLowerCase();
@@ -22,7 +22,7 @@ siml.angular = new siml.Generator({
 		_default: {
 			type: 'ATTR',
 			make: function(name) {
-				if (this.parentElement.tag === 'input' && name in siml.html5.INPUT_TYPES) {
+				if (this.parentElement.tag === 'input' && siml.html5.INPUT_TYPES.hasOwnProperty(name)) {
 					return 'type="' + name + '"';
 				}
 				// camelCase -> snake-case
