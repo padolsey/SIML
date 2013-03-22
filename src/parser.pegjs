@@ -71,7 +71,7 @@
 
 			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
 
-			if (step == null) {
+			if (step == null && nextIndentLevel !== indentLevel) {
 				step = nextIndentLevel - indentLevel;
 			}
 

@@ -178,6 +178,7 @@ describe('DefaultParser: HTML Generation', function() {
 	describe('Significant whitespace', function() {
 		it('Should be able to create a hierarchy from indentation instead of curlies', function() {
 			expect('\
+				x\n\
 				a\n\
 					b\n\
 					c\n\
@@ -185,6 +186,7 @@ describe('DefaultParser: HTML Generation', function() {
 					e\n\
 				f\n\
 			').toGenerate([
+				'<x></x>',
 				'<a>',
 					'<b></b>',
 					'<c>',
