@@ -146,6 +146,57 @@ describe('DefaultParser: HTML Generation', function() {
 		});
 	});
 
+	describe('Prototypes', function() {
+		describe('Referencing a prototype that has been set', function() {
+			it('Should recall the prototype selector', function() {
+				expect('a=b;a').toGenerate('<b></b>');
+			});
+		});
+		describe('Referencing a prototype that has been set and augmenting', function() {
+			it('Should recall the prototype selector and augment', function() {
+				expect('a=b.foo; a.baz').toGenerate('<b class="foo baz"></b>');
+			});
+		});
+		describe('Overwriting a prototype with an augmentation of itself', function() {
+			it('Should be successfully overwritten', function() {
+				expect('\
+					a = b.foo#bar[c=123]\n\
+					a\n\
+					a = a.more\n\
+					a\n\
+				').toGenerate('<b id="bar" class="foo" c="123"></b><b id="bar" class="foo more" c="123"></b>');
+			});
+		});
+		describe('Scoping prototype definitions', function() {
+			it('Should successfully scope prototypes to their nested level', function() {
+				expect('\
+					foo=a              \n\
+					lvl_0              \n\
+						foo=b          \n\
+						lvl_1          \n\
+							foo=c      \n\
+							lvl_2      \n\
+								foo=d  \n\
+								foo    \n\
+							foo        \n\
+						foo            \n\
+					foo                \n\
+				').toGenerate([
+					'<lvl_0>',
+						'<lvl_1>',
+							'<lvl_2>',
+								'<d></d>',
+							'</lvl_2>',
+							'<c></c>',
+						'</lvl_1>',
+						'<b></b>',
+					'</lvl_0>',
+					'<a></a>'
+				].join(''));
+			});
+		});
+	});
+
 	describe('Nesting', function() {
 		it('Should be able to handle various levels of nesting', function() {
 			expect('a{b{c{d{e{f{g{h{i}}}}}}}}').toGenerate('<a><b><c><d><e><f><g><h><i></i></h></g></f></e></d></c></b></a>');

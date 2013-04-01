@@ -280,7 +280,7 @@ Element
  * PrototypeDefinition
  */
 PrototypeDefinition
-	= name:PrototypeName [ \t]* '=' [ \t]* s:SingleSelector {
+	= name:PrototypeName [ \t]* '=' [ \t]* s:SingleSelector [ \t]* ';'? {
 		return ['Prototype', [name, s]];
 	}
 

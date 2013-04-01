@@ -12,7 +12,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	'use strict';
 
 	var push = [].push;
-	var splice = [].splice;
+	var unshift = [].unshift;
 
 	var DEFAULT_TAG = 'div';
 	var DEFAULT_INDENTATION = '  ';
@@ -176,22 +176,16 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			var selector = this.selector.slice();
 			var selectorPortionType;
 			var selectorPortion;
-			var protoSelector;
+			
+			this.augmentPrototypeSelector(selector);
 
 			for (var i = 0, l = selector.length; i < l; ++i) {
 				selectorPortionType = selector[i][0];
 				selectorPortion = selector[i][1];
 				switch (selectorPortionType) {
 					case 'Tag':
-						this.tag = selectorPortion;
-						// Prevent recursion for checking if we've already discovered our
-						// proto-selector:
-						if (!protoSelector && (protoSelector = this.prototypes[this.tag])) {
-							protoSelector = protoSelector.slice();
-							l += protoSelector.length;
-							protoSelector.unshift(0);
-							protoSelector.unshift(i + 1);
-							splice.apply(selector, protoSelector);
+						if (!this.tag) {
+							this.tag = selectorPortion;
 						}
 						break;
 					case 'Id':
@@ -424,7 +418,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 							this.processElement(child);
 							break;
 						case 'Prototype':
-							this.prototypes[child[0]] = child[1];
+							this.prototypes[child[0]] = this.augmentPrototypeSelector(child[1]);
 							break;
 						case 'IncGroup':
 							this.processIncGroup(child);
@@ -476,6 +470,16 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 						break;
 				}
 			}
+		},
+
+		augmentPrototypeSelector: function(selector) {
+			// Assume tag, if specified, to be first selector portion.
+			if (selector[0][0] !== 'Tag') {
+				return selector;
+			}
+			// Retrieve and unshift prototype selector portions:
+			unshift.apply(selector, this.prototypes[selector[0][1]] || []);
+			return selector;
 		}
 	};
 
@@ -1389,7 +1393,7 @@ siml.PARSER = (function(){
       }
       
       function parse_PrototypeDefinition() {
-        var result0, result1, result2, result3, result4;
+        var result0, result1, result2, result3, result4, result5, result6;
         var pos0, pos1;
         
         pos0 = clone(pos);
@@ -1454,7 +1458,49 @@ siml.PARSER = (function(){
               if (result3 !== null) {
                 result4 = parse_SingleSelector();
                 if (result4 !== null) {
-                  result0 = [result0, result1, result2, result3, result4];
+                  result5 = [];
+                  if (/^[ \t]/.test(input.charAt(pos.offset))) {
+                    result6 = input.charAt(pos.offset);
+                    advance(pos, 1);
+                  } else {
+                    result6 = null;
+                    if (reportFailures === 0) {
+                      matchFailed("[ \\t]");
+                    }
+                  }
+                  while (result6 !== null) {
+                    result5.push(result6);
+                    if (/^[ \t]/.test(input.charAt(pos.offset))) {
+                      result6 = input.charAt(pos.offset);
+                      advance(pos, 1);
+                    } else {
+                      result6 = null;
+                      if (reportFailures === 0) {
+                        matchFailed("[ \\t]");
+                      }
+                    }
+                  }
+                  if (result5 !== null) {
+                    if (input.charCodeAt(pos.offset) === 59) {
+                      result6 = ";";
+                      advance(pos, 1);
+                    } else {
+                      result6 = null;
+                      if (reportFailures === 0) {
+                        matchFailed("\";\"");
+                      }
+                    }
+                    result6 = result6 !== null ? result6 : "";
+                    if (result6 !== null) {
+                      result0 = [result0, result1, result2, result3, result4, result5, result6];
+                    } else {
+                      result0 = null;
+                      pos = clone(pos1);
+                    }
+                  } else {
+                    result0 = null;
+                    pos = clone(pos1);
+                  }
                 } else {
                   result0 = null;
                   pos = clone(pos1);

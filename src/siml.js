@@ -4,7 +4,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	'use strict';
 
 	var push = [].push;
-	var splice = [].splice;
+	var unshift = [].unshift;
 
 	var DEFAULT_TAG = 'div';
 	var DEFAULT_INDENTATION = '  ';
@@ -168,22 +168,16 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			var selector = this.selector.slice();
 			var selectorPortionType;
 			var selectorPortion;
-			var protoSelector;
+			
+			this.augmentPrototypeSelector(selector);
 
 			for (var i = 0, l = selector.length; i < l; ++i) {
 				selectorPortionType = selector[i][0];
 				selectorPortion = selector[i][1];
 				switch (selectorPortionType) {
 					case 'Tag':
-						this.tag = selectorPortion;
-						// Prevent recursion for checking if we've already discovered our
-						// proto-selector:
-						if (!protoSelector && (protoSelector = this.prototypes[this.tag])) {
-							protoSelector = protoSelector.slice();
-							l += protoSelector.length;
-							protoSelector.unshift(0);
-							protoSelector.unshift(i + 1);
-							splice.apply(selector, protoSelector);
+						if (!this.tag) {
+							this.tag = selectorPortion;
 						}
 						break;
 					case 'Id':
@@ -416,7 +410,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 							this.processElement(child);
 							break;
 						case 'Prototype':
-							this.prototypes[child[0]] = child[1];
+							this.prototypes[child[0]] = this.augmentPrototypeSelector(child[1]);
 							break;
 						case 'IncGroup':
 							this.processIncGroup(child);
@@ -468,6 +462,16 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 						break;
 				}
 			}
+		},
+
+		augmentPrototypeSelector: function(selector) {
+			// Assume tag, if specified, to be first selector portion.
+			if (selector[0][0] !== 'Tag') {
+				return selector;
+			}
+			// Retrieve and unshift prototype selector portions:
+			unshift.apply(selector, this.prototypes[selector[0][1]] || []);
+			return selector;
 		}
 	};
 
