@@ -12,6 +12,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	'use strict';
 
 	var push = [].push;
+	var splice = [].splice;
 
 	var DEFAULT_TAG = 'div';
 	var DEFAULT_INDENTATION = '  ';
@@ -147,6 +148,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		this.attrs = [];
 		this.classes = [];
 		this.pseudos = [];
+		this.prototypes = objCreate(parentElement && parentElement.prototypes || null);
 
 		this.isSingular = false;
 		this.multiplier = 1;
@@ -171,16 +173,27 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		make: function() {
 
-			var selector = this.selector;
+			var selector = this.selector.slice();
 			var selectorPortionType;
 			var selectorPortion;
+			var protoSelector;
 
 			for (var i = 0, l = selector.length; i < l; ++i) {
 				selectorPortionType = selector[i][0];
 				selectorPortion = selector[i][1];
 				switch (selectorPortionType) {
 					case 'Tag':
-						this.tag = selectorPortion; break;
+						this.tag = selectorPortion;
+						// Prevent recursion for checking if we've already discovered our
+						// proto-selector:
+						if (!protoSelector && (protoSelector = this.prototypes[this.tag])) {
+							protoSelector = protoSelector.slice();
+							l += protoSelector.length;
+							protoSelector.unshift(0);
+							protoSelector.unshift(i + 1);
+							splice.apply(selector, protoSelector);
+						}
+						break;
 					case 'Id':
 						this.id = selectorPortion; break;
 					case 'Attr':
@@ -404,15 +417,22 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 			} else {
 				for (i = 0; i < cl; ++i) {
+					var child = children[i][1];
 					var childType = children[i][0];
-					if (childType === 'Element') {
-						this.processElement(children[i][1]);
-					} else if (childType === 'IncGroup') {
-						this.processIncGroup(children[i][1]);
-					} else if (childType === 'ExcGroup') {
-						throw new Error('SIML: Found ExcGroup in unexpected location');
-					} else {
-						this.processProperty(childType, children[i][1]);
+					switch (childType) {
+						case 'Element':
+							this.processElement(child);
+							break;
+						case 'Prototype':
+							this.prototypes[child[0]] = child[1];
+							break;
+						case 'IncGroup':
+							this.processIncGroup(child);
+							break;
+						case 'ExcGroup':
+							throw new Error('SIML: Found ExcGroup in unexpected location');
+						default:
+							this.processProperty(childType, child);
 					}
 				}
 			}
@@ -726,7 +746,9 @@ siml.PARSER = (function(){
         "ChildrenDeclaration": parse_ChildrenDeclaration,
         "Single": parse_Single,
         "Element": parse_Element,
-        "singleSelector": parse_singleSelector,
+        "PrototypeDefinition": parse_PrototypeDefinition,
+        "PrototypeName": parse_PrototypeName,
+        "SingleSelector": parse_SingleSelector,
         "selectorRepeatableComponent": parse_selectorRepeatableComponent,
         "selectorTag": parse_selectorTag,
         "selectorIdClass": parse_selectorIdClass,
@@ -1141,14 +1163,12 @@ siml.PARSER = (function(){
         
         				return singleA;
         			}
-        			case 'Directive': {
-        				return ['IncGroup', [singleA, singleB]];
-        			}
+        			case 'Prototype':
+        			case 'Directive':
         			case 'Attribute': {
         				return ['IncGroup', [singleA, singleB]];
         			}
         		}
-        		console.warn(':::', singleA, singleB)
         		return 'ERROR';
         	})(pos0.offset, pos0.line, pos0.column, result0[0], result0[1], result0[3]);
         }
@@ -1457,11 +1477,14 @@ siml.PARSER = (function(){
         
         result0 = parse_Attribute();
         if (result0 === null) {
-          result0 = parse_Element();
+          result0 = parse_PrototypeDefinition();
           if (result0 === null) {
-            result0 = parse_Text();
+            result0 = parse_Element();
             if (result0 === null) {
-              result0 = parse_Directive();
+              result0 = parse_Text();
+              if (result0 === null) {
+                result0 = parse_Directive();
+              }
             }
           }
         }
@@ -1473,7 +1496,7 @@ siml.PARSER = (function(){
         var pos0;
         
         pos0 = clone(pos);
-        result0 = parse_singleSelector();
+        result0 = parse_SingleSelector();
         if (result0 !== null) {
           result0 = (function(offset, line, column, s) {
         		return ['Element', [s,[]]];
@@ -1485,7 +1508,162 @@ siml.PARSER = (function(){
         return result0;
       }
       
-      function parse_singleSelector() {
+      function parse_PrototypeDefinition() {
+        var result0, result1, result2, result3, result4;
+        var pos0, pos1;
+        
+        pos0 = clone(pos);
+        pos1 = clone(pos);
+        result0 = parse_PrototypeName();
+        if (result0 !== null) {
+          result1 = [];
+          if (/^[ \t]/.test(input.charAt(pos.offset))) {
+            result2 = input.charAt(pos.offset);
+            advance(pos, 1);
+          } else {
+            result2 = null;
+            if (reportFailures === 0) {
+              matchFailed("[ \\t]");
+            }
+          }
+          while (result2 !== null) {
+            result1.push(result2);
+            if (/^[ \t]/.test(input.charAt(pos.offset))) {
+              result2 = input.charAt(pos.offset);
+              advance(pos, 1);
+            } else {
+              result2 = null;
+              if (reportFailures === 0) {
+                matchFailed("[ \\t]");
+              }
+            }
+          }
+          if (result1 !== null) {
+            if (input.charCodeAt(pos.offset) === 61) {
+              result2 = "=";
+              advance(pos, 1);
+            } else {
+              result2 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"=\"");
+              }
+            }
+            if (result2 !== null) {
+              result3 = [];
+              if (/^[ \t]/.test(input.charAt(pos.offset))) {
+                result4 = input.charAt(pos.offset);
+                advance(pos, 1);
+              } else {
+                result4 = null;
+                if (reportFailures === 0) {
+                  matchFailed("[ \\t]");
+                }
+              }
+              while (result4 !== null) {
+                result3.push(result4);
+                if (/^[ \t]/.test(input.charAt(pos.offset))) {
+                  result4 = input.charAt(pos.offset);
+                  advance(pos, 1);
+                } else {
+                  result4 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("[ \\t]");
+                  }
+                }
+              }
+              if (result3 !== null) {
+                result4 = parse_SingleSelector();
+                if (result4 !== null) {
+                  result0 = [result0, result1, result2, result3, result4];
+                } else {
+                  result0 = null;
+                  pos = clone(pos1);
+                }
+              } else {
+                result0 = null;
+                pos = clone(pos1);
+              }
+            } else {
+              result0 = null;
+              pos = clone(pos1);
+            }
+          } else {
+            result0 = null;
+            pos = clone(pos1);
+          }
+        } else {
+          result0 = null;
+          pos = clone(pos1);
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, line, column, name, s) {
+        		return ['Prototype', [name, s]];
+        	})(pos0.offset, pos0.line, pos0.column, result0[0], result0[4]);
+        }
+        if (result0 === null) {
+          pos = clone(pos0);
+        }
+        return result0;
+      }
+      
+      function parse_PrototypeName() {
+        var result0, result1, result2;
+        var pos0, pos1;
+        
+        pos0 = clone(pos);
+        pos1 = clone(pos);
+        if (/^[a-zA-Z_$]/.test(input.charAt(pos.offset))) {
+          result0 = input.charAt(pos.offset);
+          advance(pos, 1);
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("[a-zA-Z_$]");
+          }
+        }
+        if (result0 !== null) {
+          result1 = [];
+          if (/^[a-zA-Z0-9$_\-]/.test(input.charAt(pos.offset))) {
+            result2 = input.charAt(pos.offset);
+            advance(pos, 1);
+          } else {
+            result2 = null;
+            if (reportFailures === 0) {
+              matchFailed("[a-zA-Z0-9$_\\-]");
+            }
+          }
+          while (result2 !== null) {
+            result1.push(result2);
+            if (/^[a-zA-Z0-9$_\-]/.test(input.charAt(pos.offset))) {
+              result2 = input.charAt(pos.offset);
+              advance(pos, 1);
+            } else {
+              result2 = null;
+              if (reportFailures === 0) {
+                matchFailed("[a-zA-Z0-9$_\\-]");
+              }
+            }
+          }
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = clone(pos1);
+          }
+        } else {
+          result0 = null;
+          pos = clone(pos1);
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, line, column, a, b) { return a+b.join(''); })(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
+        }
+        if (result0 === null) {
+          pos = clone(pos0);
+        }
+        return result0;
+      }
+      
+      function parse_SingleSelector() {
         var result0, result1, result2;
         var pos0, pos1;
         
@@ -3372,7 +3550,7 @@ siml.PARSER = (function(){
       
       			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
       
-      			if (step == null) {
+      			if (step == null && nextIndentLevel !== indentLevel) {
       				step = nextIndentLevel - indentLevel;
       			}
       
