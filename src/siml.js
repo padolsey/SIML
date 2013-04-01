@@ -4,6 +4,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	'use strict';
 
 	var push = [].push;
+	var splice = [].splice;
 
 	var DEFAULT_TAG = 'div';
 	var DEFAULT_INDENTATION = '  ';
@@ -139,6 +140,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		this.attrs = [];
 		this.classes = [];
 		this.pseudos = [];
+		this.prototypes = objCreate(parentElement && parentElement.prototypes || null);
 
 		this.isSingular = false;
 		this.multiplier = 1;
@@ -163,16 +165,27 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		make: function() {
 
-			var selector = this.selector;
+			var selector = this.selector.slice();
 			var selectorPortionType;
 			var selectorPortion;
+			var protoSelector;
 
 			for (var i = 0, l = selector.length; i < l; ++i) {
 				selectorPortionType = selector[i][0];
 				selectorPortion = selector[i][1];
 				switch (selectorPortionType) {
 					case 'Tag':
-						this.tag = selectorPortion; break;
+						this.tag = selectorPortion;
+						// Prevent recursion for checking if we've already discovered our
+						// proto-selector:
+						if (!protoSelector && (protoSelector = this.prototypes[this.tag])) {
+							protoSelector = protoSelector.slice();
+							l += protoSelector.length;
+							protoSelector.unshift(0);
+							protoSelector.unshift(i + 1);
+							splice.apply(selector, protoSelector);
+						}
+						break;
 					case 'Id':
 						this.id = selectorPortion; break;
 					case 'Attr':
@@ -396,15 +409,22 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 			} else {
 				for (i = 0; i < cl; ++i) {
+					var child = children[i][1];
 					var childType = children[i][0];
-					if (childType === 'Element') {
-						this.processElement(children[i][1]);
-					} else if (childType === 'IncGroup') {
-						this.processIncGroup(children[i][1]);
-					} else if (childType === 'ExcGroup') {
-						throw new Error('SIML: Found ExcGroup in unexpected location');
-					} else {
-						this.processProperty(childType, children[i][1]);
+					switch (childType) {
+						case 'Element':
+							this.processElement(child);
+							break;
+						case 'Prototype':
+							this.prototypes[child[0]] = child[1];
+							break;
+						case 'IncGroup':
+							this.processIncGroup(child);
+							break;
+						case 'ExcGroup':
+							throw new Error('SIML: Found ExcGroup in unexpected location');
+						default:
+							this.processProperty(childType, child);
 					}
 				}
 			}

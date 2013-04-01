@@ -208,14 +208,12 @@ LSeries
 
 				return singleA;
 			}
-			case 'Directive': {
-				return ['IncGroup', [singleA, singleB]];
-			}
+			case 'Prototype':
+			case 'Directive':
 			case 'Attribute': {
 				return ['IncGroup', [singleA, singleB]];
 			}
 		}
-		console.warn(':::', singleA, singleB)
 		return 'ERROR';
 	}
 	/ '(' _ head:MSeries body:(_ '/' _ MSeries)* _ ')' selector:selectorRepeatableComponent* _ tail:ExcGroupRHS?  {
@@ -265,6 +263,7 @@ ChildrenDeclaration
  */ 
 Single
 	= Attribute
+	/ PrototypeDefinition
 	/ Element
 	/ Text
 	/ Directive
@@ -278,12 +277,23 @@ Element
 	}
 
 /**
+ * PrototypeDefinition
+ */
+PrototypeDefinition
+	= name:PrototypeName [ \t]* '=' [ \t]* s:SingleSelector {
+		return ['Prototype', [name, s]];
+	}
+
+PrototypeName
+	= a:[a-zA-Z_$] b:[a-zA-Z0-9$_-]* { return a+b.join(''); }
+
+/**
  * Selector
  */
 Selector "Selector"
-	= singleSelector
+	= SingleSelector
 
-singleSelector
+SingleSelector
 	= s:(selectorTag selectorRepeatableComponent*) {
 		s[1].unshift(s[0]);
 		return s[1];
