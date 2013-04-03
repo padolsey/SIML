@@ -264,3 +264,6 @@ More to come...
  * 0.3.1
   * Using Object.create shim (not exposed though)
   * Changed naming of customisable Parsers to "Generators" (makes more sense)
+ * 0.3.2
+  * Directives can now have children. See [new feature specs](https://github.com/padolsey/SIML/commit/c528c4ac7cf2016699feb2c4b5b5ffed1a8ad803).
+  * Selector Prototypes. See [Issue #2](https://github.com/padolsey/SIML/issues/2)

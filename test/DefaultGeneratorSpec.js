@@ -147,6 +147,24 @@ describe('DefaultParser: HTML Generation', function() {
 	});
 
 	describe('Prototypes', function() {
+		describe('Basic use-cases', function() {
+			describe('Reference prototype with default/placeholder attributes', function() {
+				it('Should generate HTML by augmenting the prototype with the subject selector', function() {
+					expect('\
+						link = a.link.special[href=""][title="placeholder"] \n\
+						link \n\
+						link.another \n\
+						link[href="http://foo.com/blah"].yet.another \n\
+						link[href="foo"][title="blah"] \n\
+					').toGenerate([
+						'<a class="link special" href="" title="placeholder"></a>',
+						'<a class="link special another" href="" title="placeholder"></a>',
+						'<a class="link special yet another" href="http://foo.com/blah" title="placeholder"></a>',
+						'<a class="link special" href="foo" title="blah"></a>',
+					].join(''));
+				});
+			});
+		});
 		describe('Referencing a prototype that has been set', function() {
 			it('Should recall the prototype selector', function() {
 				expect('a=b;a').toGenerate('<b></b>');
