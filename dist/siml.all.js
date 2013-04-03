@@ -173,6 +173,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 		make: function() {
 
+			var attributeMap = {};
 			var selector = this.selector.slice();
 			var selectorPortionType;
 			var selectorPortion;
@@ -191,10 +192,14 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 					case 'Id':
 						this.id = selectorPortion; break;
 					case 'Attr':
-						this.attrs.push([
-							selectorPortion[0],
-							[selectorPortion[1]]
-						]);
+						var attrName = selectorPortion[0];
+						var attr = [attrName, [selectorPortion[1]]];
+						// Attributes can only be defined once -- latest wins
+						if (attributeMap[attrName] != null) {
+							this.attrs[attributeMap[attrName]] = attr;
+						} else {
+							attributeMap[attrName] = this.attrs.push(attr) - 1;
+						}
 						break;
 					case 'Class':
 						this.classes.push(selectorPortion); break;
