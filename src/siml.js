@@ -21,6 +21,12 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				return escapeHTML(t);
 			}
 		},
+		_fillHTML: {
+			type: 'CONTENT',
+			make: function(_, children, t) {
+				return t;
+			}
+		},
 		_default: {
 			type: 'CONTENT',
 			make: function(dir) {

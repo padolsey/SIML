@@ -244,6 +244,32 @@ describe('DefaultParser: HTML Generation', function() {
 		});
 	});
 
+	describe('Plain HTML', function() {
+		it('Should be able to output plain HTML within `...`', function() {
+			expect('a `<span>wow</span>`').toGenerate('<a><span>wow</span></a>');
+			expect('\
+				section {\
+					`<!-- HTML -->`\
+					`\
+						This <><>\n\
+						is\n\
+						<NOT><ESCAPED>\n\
+					` "this is es<caped>"\
+				}\
+			').toGenerate([
+				'<section>',
+					'<!-- HTML -->',
+					// Inner HTML whitespace is maintained
+					'						This <><>\n',
+					'						is\n',
+					'						<NOT><ESCAPED>\n',
+					'					',
+					'this is es&lt;caped&gt;',
+				'</section>'
+			].join(''));
+		});
+	});
+
 	describe('Significant whitespace', function() {
 		it('Should be able to create a hierarchy from indentation instead of curlies', function() {
 			expect('\

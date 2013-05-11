@@ -30,6 +30,13 @@
 		return $1 + '%%__STRING_TOKEN___%%' + (stringTokens.push($2) - 1);
 	});
 
+	// Replace HTML with string tokens too
+	input = input.replace(/(`)((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
+		return '%%__HTML_TOKEN___%%' + (stringTokens.push(
+			$2.replace(/\\`/g, '\`')
+		) - 1);
+	});
+
 	var isCurly = /\/\*\s*siml:curly=true\s*\*\//i.test(input);
 
 	// Remove comments:
@@ -266,6 +273,7 @@ Single
 	/ PrototypeDefinition
 	/ Element
 	/ Text
+	/ HTML
 	/ Directive
 
 /**
@@ -343,6 +351,14 @@ selectorAttrValue
 Text
 	= s:string {
 		return ['Directive', ['_fillText', [s], []]];
+	}
+
+/**
+ * HTML
+ */
+HTML
+	= s:html {
+		return ['Directive', ['_fillHTML', [s], []]];
 	}
 
 /**
@@ -434,6 +450,11 @@ value
 
 string "String"
 	= '%%__STRING_TOKEN___%%' d:[0-9]+ {
+		return stringTokens[ d.join('') ];
+	}
+
+html "HTML"
+	= '%%__HTML_TOKEN___%%' d:[0-9]+ {
 		return stringTokens[ d.join('') ];
 	}
 
