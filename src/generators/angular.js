@@ -2,6 +2,8 @@ siml.angular = new siml.Generator({
 	pretty: true,
 	toTag: siml.html5.config.toTag,
 	directives: {
+		doctype: siml.html5.config.directives.doctype,
+		dt: siml.html5.config.directives.dt,
 		_default: {
 			type: 'ATTR',
 			make: function(name, children, value) {

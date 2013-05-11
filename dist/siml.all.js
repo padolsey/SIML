@@ -1,6 +1,6 @@
 /**
  * SIML (c) James Padolsey 2013
- * @version 0.3.2dev
+ * @version 0.3.3
  * @license https://github.com/padolsey/SIML/blob/master/LICENSE-MIT
  * @info http://github.com/padolsey/SIML
  */
@@ -27,6 +27,12 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			type: 'CONTENT',
 			make: function(_, children, t) {
 				return escapeHTML(t);
+			}
+		},
+		_fillHTML: {
+			type: 'CONTENT',
+			make: function(_, children, t) {
+				return t;
 			}
 		},
 		_default: {
@@ -640,19 +646,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 		},
 		directives: {
 			doctype: doctypeDirective,
-			dt: doctypeDirective,
-			foo: {
-					type: 'CONTENT',
-					make: function(name, children/*, args */) {
-						this.parentElement.htmlContent.push(
-							'<foo>' + [].slice.call(arguments, 2).join()
-						);
-						if (children.length) {
-							this.parentElement.processChildren(children);
-						}
-						this.parentElement.htmlContent.push('</foo>');
-					}
-			}
+			dt: doctypeDirective
 		},
 		pseudos: {
 			_default: {
@@ -677,6 +671,8 @@ siml.angular = new siml.Generator({
 	pretty: true,
 	toTag: siml.html5.config.toTag,
 	directives: {
+		doctype: siml.html5.config.directives.doctype,
+		dt: siml.html5.config.directives.dt,
 		_default: {
 			type: 'ATTR',
 			make: function(name, children, value) {
@@ -765,6 +761,7 @@ siml.PARSER = (function(){
         "selectorPseudo": parse_selectorPseudo,
         "selectorAttrValue": parse_selectorAttrValue,
         "Text": parse_Text,
+        "HTML": parse_HTML,
         "Attribute": parse_Attribute,
         "attributeName": parse_attributeName,
         "Directive": parse_Directive,
@@ -777,6 +774,7 @@ siml.PARSER = (function(){
         "arrayElements": parse_arrayElements,
         "value": parse_value,
         "string": parse_string,
+        "html": parse_html,
         "simpleString": parse_simpleString,
         "number": parse_number,
         "int": parse_int,
@@ -1492,7 +1490,10 @@ siml.PARSER = (function(){
             if (result0 === null) {
               result0 = parse_Text();
               if (result0 === null) {
-                result0 = parse_Directive();
+                result0 = parse_HTML();
+                if (result0 === null) {
+                  result0 = parse_Directive();
+                }
               }
             }
           }
@@ -2144,6 +2145,23 @@ siml.PARSER = (function(){
         if (result0 !== null) {
           result0 = (function(offset, line, column, s) {
         		return ['Directive', ['_fillText', [s], []]];
+        	})(pos0.offset, pos0.line, pos0.column, result0);
+        }
+        if (result0 === null) {
+          pos = clone(pos0);
+        }
+        return result0;
+      }
+      
+      function parse_HTML() {
+        var result0;
+        var pos0;
+        
+        pos0 = clone(pos);
+        result0 = parse_html();
+        if (result0 !== null) {
+          result0 = (function(offset, line, column, s) {
+        		return ['Directive', ['_fillHTML', [s], []]];
         	})(pos0.offset, pos0.line, pos0.column, result0);
         }
         if (result0 === null) {
@@ -3035,6 +3053,74 @@ siml.PARSER = (function(){
         return result0;
       }
       
+      function parse_html() {
+        var result0, result1, result2;
+        var pos0, pos1;
+        
+        reportFailures++;
+        pos0 = clone(pos);
+        pos1 = clone(pos);
+        if (input.substr(pos.offset, 19) === "%%__HTML_TOKEN___%%") {
+          result0 = "%%__HTML_TOKEN___%%";
+          advance(pos, 19);
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\"%%__HTML_TOKEN___%%\"");
+          }
+        }
+        if (result0 !== null) {
+          if (/^[0-9]/.test(input.charAt(pos.offset))) {
+            result2 = input.charAt(pos.offset);
+            advance(pos, 1);
+          } else {
+            result2 = null;
+            if (reportFailures === 0) {
+              matchFailed("[0-9]");
+            }
+          }
+          if (result2 !== null) {
+            result1 = [];
+            while (result2 !== null) {
+              result1.push(result2);
+              if (/^[0-9]/.test(input.charAt(pos.offset))) {
+                result2 = input.charAt(pos.offset);
+                advance(pos, 1);
+              } else {
+                result2 = null;
+                if (reportFailures === 0) {
+                  matchFailed("[0-9]");
+                }
+              }
+            }
+          } else {
+            result1 = null;
+          }
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = clone(pos1);
+          }
+        } else {
+          result0 = null;
+          pos = clone(pos1);
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, line, column, d) {
+        		return stringTokens[ d.join('') ];
+        	})(pos0.offset, pos0.line, pos0.column, result0[1]);
+        }
+        if (result0 === null) {
+          pos = clone(pos0);
+        }
+        reportFailures--;
+        if (reportFailures === 0 && result0 === null) {
+          matchFailed("HTML");
+        }
+        return result0;
+      }
+      
       function parse_simpleString() {
         var result0, result1;
         var pos0;
@@ -3558,6 +3644,13 @@ siml.PARSER = (function(){
       	});
       	input = input.replace(/(^|\n)\s*\\([^\n\r]+)/g, function($0, $1, $2) {
       		return $1 + '%%__STRING_TOKEN___%%' + (stringTokens.push($2) - 1);
+      	});
+      
+      	// Replace HTML with string tokens too
+      	input = input.replace(/(`)((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
+      		return '%%__HTML_TOKEN___%%' + (stringTokens.push(
+      			$2.replace(/\\`/g, '\`')
+      		) - 1);
       	});
       
       	var isCurly = /\/\*\s*siml:curly=true\s*\*\//i.test(input);

@@ -49,19 +49,7 @@
 		},
 		directives: {
 			doctype: doctypeDirective,
-			dt: doctypeDirective,
-			foo: {
-					type: 'CONTENT',
-					make: function(name, children/*, args */) {
-						this.parentElement.htmlContent.push(
-							'<foo>' + [].slice.call(arguments, 2).join()
-						);
-						if (children.length) {
-							this.parentElement.processChildren(children);
-						}
-						this.parentElement.htmlContent.push('</foo>');
-					}
-			}
+			dt: doctypeDirective
 		},
 		pseudos: {
 			_default: {
