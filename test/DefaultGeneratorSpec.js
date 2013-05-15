@@ -254,7 +254,14 @@ describe('DefaultParser: HTML Generation', function() {
 						This <><>\n\
 						is\n\
 						<NOT><ESCAPED>\n\
-					` "this is es<caped>"\
+					` "this is es<caped>"\n\
+					// Ensure I can use back-tick without escaping if my delimiters\n\
+					// are multi-back-tick (heredoc-esque):\n\
+					```\n\
+						more``\n\
+							unescaped`\n\
+								``<HTML>\n\
+					```\
 				}\
 			').toGenerate([
 				'<section>',
@@ -265,6 +272,11 @@ describe('DefaultParser: HTML Generation', function() {
 					'						<NOT><ESCAPED>\n',
 					'					',
 					'this is es&lt;caped&gt;',
+					'\n',
+					'						more``\n',
+					'							unescaped`\n',
+					'								``<HTML>\n',
+					'					',
 				'</section>'
 			].join(''));
 		});
