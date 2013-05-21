@@ -267,3 +267,6 @@ More to come...
  * 0.3.2
   * Directives can now have children. See [new feature specs](https://github.com/padolsey/SIML/commit/c528c4ac7cf2016699feb2c4b5b5ffed1a8ad803).
   * Selector Prototypes. See [Issue #2](https://github.com/padolsey/SIML/issues/2)
+ * 0.3.3
+  * Break-out feature. See [Issue #3](https://github.com/padolsey/SIML/issues/3)
+  * Support for here-doc style text (escaped) and HTML strings

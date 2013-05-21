@@ -3647,7 +3647,7 @@ siml.PARSER = (function(){
       	});
       
       	// Replace HTML with string tokens too
-      	input = input.replace(/(`)((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
+      	input = input.replace(/(`+)((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
       		return '%%__HTML_TOKEN___%%' + (stringTokens.push(
       			$2.replace(/\\`/g, '\`')
       		) - 1);
