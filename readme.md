@@ -270,3 +270,5 @@ More to come...
  * 0.3.3
   * Break-out feature. See [Issue #3](https://github.com/padolsey/SIML/issues/3)
   * Support for here-doc style text (escaped) and HTML strings
+ * 0.3.4
+  * Fixed issue where attribute/directive values did not support backtick (no-escape) quotes. See [Issue #4](https://github.com/padolsey/SIML/issues/4)
