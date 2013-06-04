@@ -15,6 +15,10 @@
 		return out;
 	}
 
+	function escapeHTML(h) {
+		return String(h).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
+	}
+
 	// Replace all strings with recoverable string tokens:
 	// This is done to make comment-removal possible and safe.
 	var stringTokens = [];
@@ -350,7 +354,7 @@ selectorAttrValue
  */
 Text
 	= s:string {
-		return ['Directive', ['_fillText', [s], []]];
+		return ['Directive', ['_fillHTML', [escapeHTML(s)], []]];
 	}
 
 /**
@@ -369,6 +373,9 @@ Attribute
 		return ['Attribute', [name, [value]]];
 	}
 	/ name:attributeName _ ":" _ value:string {
+		return ['Attribute', [name, [escapeHTML(value)]]];
+	}
+	/ name:attributeName _ ":" _ value:html {
 		return ['Attribute', [name, [value]]];
 	}
 	/ name:attributeName _ ":" [ \t] value:value { // explicit space
@@ -378,6 +385,7 @@ Attribute
 attributeName "AttributeName"
 	= name:[A-Za-z0-9-_]+ { return name.join(''); }
 	/ string
+	/ html
 
 /**
  * Directive
@@ -440,8 +448,11 @@ arrayElements
 		}
 
 value
-	= string
+	= s:string {
+		return escapeHTML(s);
+	}
 	/ simpleString
+	/ html
 	/ number
 	/ "true" _	{ return true;	 }
 	/ "false" _ { return false;	}

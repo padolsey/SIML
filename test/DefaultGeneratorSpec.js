@@ -35,7 +35,7 @@ describe('DefaultParser: HTML Generation', function() {
 			expect('foo { "Look: " span "HERE!" }').toGenerate('<foo>Look: <span>HERE!</span></foo>');
 			expect('foo { "Look: " span{} "HERE!" }').toGenerate('<foo>Look: <span></span>HERE!</foo>');
 			expect('a "b" c "d"').toGenerate('<a>b<c>d</c></a>');
-			expect('   a { @_fillText("foo"); @_fillText("baz"); "  " em }  ').toGenerate('<a>foobaz  <em></em></a>');
+			expect('   a { @_fillHTML("foo"); @_fillHTML("baz"); "  " em }  ').toGenerate('<a>foobaz  <em></em></a>');
 		});
 	});
 
@@ -250,6 +250,7 @@ describe('DefaultParser: HTML Generation', function() {
 			expect('\
 				section {\
 					`<!-- HTML -->`\
+					data-x: `raw-<>`;\
 					`\
 						This <><>\n\
 						is\n\
@@ -264,7 +265,7 @@ describe('DefaultParser: HTML Generation', function() {
 					```\
 				}\
 			').toGenerate([
-				'<section>',
+				'<section data-x="raw-<>">',
 					'<!-- HTML -->',
 					// Inner HTML whitespace is maintained
 					'						This <><>\n',
@@ -279,6 +280,22 @@ describe('DefaultParser: HTML Generation', function() {
 					'					',
 				'</section>'
 			].join(''));
+		});
+	});
+
+	describe('Escaping', function() {
+		it('Escapes qouted text', function() {
+			expect('"O < K"').toGenerate('O &lt; K');
+			expect('"O < K" \'&&\'').toGenerate('O &lt; K&amp;&amp;');
+		});
+		it('Escapes quoted attribute values', function() {
+			expect('d { id: "<<" }').toGenerate('<d id="&lt;&lt;"></d>');
+		});
+		it('Does not escape backticked text', function() {
+			expect('`O < K`').toGenerate('O < K');
+		});
+		it('Does not escape backticked attribute values', function() {
+			expect('d { id: `<<` }').toGenerate('<d id="<<"></d>');
 		});
 	});
 
@@ -310,11 +327,11 @@ describe('DefaultParser: HTML Generation', function() {
 				    "a"\n\
 				    "b"\n\
 				    section\n\
-				    "c"\n\
+				    "<c>"\n\
 				    "d"\n\
 			').toGenerate([
 				'<body>',
-					'ab<section></section>cd',
+					'ab<section></section>&lt;c&gt;d',
 				'</body>'
 			].join(''));
 		});

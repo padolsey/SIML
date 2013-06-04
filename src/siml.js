@@ -15,12 +15,6 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	};
 
 	var DEFAULT_DIRECTIVES = {
-		_fillText: {
-			type: 'CONTENT',
-			make: function(_, children, t) {
-				return escapeHTML(t);
-			}
-		},
 		_fillHTML: {
 			type: 'CONTENT',
 			make: function(_, children, t) {
@@ -42,13 +36,13 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 				if (value == null) {
 					return attrName;
 				}
-				return attrName + '="' + escapeHTML(value) + '"';
+				return attrName + '="' + value + '"';
 			}
 		},
 		text: {
 			type: 'CONTENT',
 			make: function(_, t) {
-				return escapeHTML(t);
+				return t;
 			}
 		}
 	};

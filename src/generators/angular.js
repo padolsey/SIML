@@ -16,7 +16,7 @@ siml.angular = new siml.Generator({
 				} else {
 					name = 'ng-' + name;
 				}
-				return name + '="' + siml.Generator.escapeHTML(value) + '"';
+				return name + '="' + value + '"';
 			}
 		}
 	},
