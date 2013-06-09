@@ -1,6 +1,6 @@
 /**
  * SIML (c) James Padolsey 2013
- * @version 0.3.4
+ * @version 0.3.5
  * @license https://github.com/padolsey/SIML/blob/master/LICENSE-MIT
  * @info http://github.com/padolsey/SIML
  */
@@ -3701,20 +3701,22 @@ siml.PARSER = (function(){
       	function resolveStringToken(tok) {
       		return stringTokens[tok.substring('%%__STRING_TOKEN___%%'.length)]
       	}
+      
+      	// Replace HTML with string tokens first
+      	input = input.replace(/(`+)((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
+      		return '%%__HTML_TOKEN___%%' + (stringTokens.push(
+      			$2.replace(/\\`/g, '\`')
+      		) - 1);
+      	});
+      
       	input = input.replace(/(["'])((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
       		return '%%__STRING_TOKEN___%%' + (stringTokens.push(
       			$2.replace(/\\'/g, '\'').replace(/\\"/g, '"')
       		) - 1);
       	});
+      
       	input = input.replace(/(^|\n)\s*\\([^\n\r]+)/g, function($0, $1, $2) {
       		return $1 + '%%__STRING_TOKEN___%%' + (stringTokens.push($2) - 1);
-      	});
-      
-      	// Replace HTML with string tokens too
-      	input = input.replace(/(`+)((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
-      		return '%%__HTML_TOKEN___%%' + (stringTokens.push(
-      			$2.replace(/\\`/g, '\`')
-      		) - 1);
       	});
       
       	var isCurly = /\/\*\s*siml:curly=true\s*\*\//i.test(input);
