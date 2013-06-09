@@ -294,6 +294,9 @@ describe('DefaultParser: HTML Generation', function() {
 		it('Does not escape backticked text', function() {
 			expect('`O < K`').toGenerate('O < K');
 		});
+		it('Quotes strings are not parsed within backticks', function() {
+			expect('` "this" and \'this ... \' ..`').toGenerate(' "this" and \'this ... \' ..');
+		});
 		it('Does not escape backticked attribute values', function() {
 			expect('d { id: `<<` }').toGenerate('<d id="<<"></d>');
 		});
