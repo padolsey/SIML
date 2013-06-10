@@ -243,18 +243,19 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 			if (this.isSingular) {
 				output.push('/>');
-				return;
+			} else {
+
+				output.push('>');
+
+				if (content.length) {
+					isPretty && output.push('\n');
+					output.push(content.join(isPretty ? '\n': ''));
+					isPretty && output.push('\n' + indent);
+				}
+
+				output.push('</' + this.tag + '>');
+
 			}
-
-			output.push('>');
-
-			if (content.length) {
-				isPretty && output.push('\n');
-				output.push(content.join(isPretty ? '\n': ''));
-				isPretty && output.push('\n' + indent);
-			}
-
-			output.push('</' + this.tag + '>');
 
 			if (this.multiplier > 1) {
 				var all = output.join('');

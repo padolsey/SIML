@@ -21,7 +21,9 @@
 
 	// Replace all strings with recoverable string tokens:
 	// This is done to make comment-removal possible and safe.
-	var stringTokens = [];
+	var stringTokens = [
+		// [ 'QUOTE', 'ACTUAL_STRING' ] ...
+	];
 	function resolveStringToken(tok) {
 		return stringTokens[tok.substring('%%__STRING_TOKEN___%%'.length)]
 	}
@@ -29,18 +31,18 @@
 	// Replace HTML with string tokens first
 	input = input.replace(/(`+)((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
 		return '%%__HTML_TOKEN___%%' + (stringTokens.push(
-			$2.replace(/\\`/g, '\`')
+			[$1, $2.replace(/\\`/g, '\`')]
 		) - 1);
 	});
 
 	input = input.replace(/(["'])((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
 		return '%%__STRING_TOKEN___%%' + (stringTokens.push(
-			$2.replace(/\\'/g, '\'').replace(/\\"/g, '"')
+			[$1, $2.replace(/\\'/g, '\'').replace(/\\"/g, '"')]
 		) - 1);
 	});
 
 	input = input.replace(/(^|\n)\s*\\([^\n\r]+)/g, function($0, $1, $2) {
-		return $1 + '%%__STRING_TOKEN___%%' + (stringTokens.push($2) - 1);
+		return $1 + '%%__STRING_TOKEN___%%' + (stringTokens.push([$1, $2]) - 1);
 	});
 
 	var isCurly = /\/\*\s*siml:curly=true\s*\*\//i.test(input);
@@ -463,12 +465,16 @@ value
 
 string "String"
 	= '%%__STRING_TOKEN___%%' d:[0-9]+ {
-		return stringTokens[ d.join('') ];
+		// Replace any `...` quotes within the String:
+		return stringTokens[ d.join('') ][1].replace(/%%__HTML_TOKEN___%%(\d+)/g, function(_, $1) {
+			var str = stringTokens[ $1 ];
+			return str[0] + str[1] + str[0];
+		});
 	}
 
 html "HTML"
 	= '%%__HTML_TOKEN___%%' d:[0-9]+ {
-		return stringTokens[ d.join('') ];
+		return stringTokens[ d.join('') ][1];
 	}
 
 simpleString "SimpleString"

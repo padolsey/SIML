@@ -300,6 +300,9 @@ describe('DefaultParser: HTML Generation', function() {
 		it('Does not escape backticked attribute values', function() {
 			expect('d { id: `<<` }').toGenerate('<d id="<<"></d>');
 		});
+		it('Does not escape/parse backticked strings within regular quoted strings', function() {
+			expect('"`ok` .. `ok2`"').toGenerate('`ok` .. `ok2`');
+		});
 	});
 
 	describe('Significant whitespace', function() {
@@ -460,6 +463,19 @@ html\n\
 					'</body>',
 				'</html>'
 			].join(''));
+		});
+	});
+
+	describe('Multiplier [SimplerSelector:Number]', function() {
+		it('Should multiply subject element by N times', function() {
+			expect('a:3{href:"f";text:"ok"}').toGenerate([
+				'<a href="f">ok</a>',
+				'<a href="f">ok</a>',
+				'<a href="f">ok</a>'
+			].join(''));
+		});
+		it('Should work on singular tags', function() {
+			expect('br:2').toGenerate('<br/><br/>');	
 		});
 	});
 

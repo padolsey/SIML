@@ -274,3 +274,6 @@ More to come...
   * Fixed issue where attribute/directive values did not support backtick (no-escape) quotes. See [Issue #4](https://github.com/padolsey/SIML/issues/4)
  * 0.3.5
   * Fixed using quoted strings in 'heredoc' blocks. See [Issue #5](https://github.com/padolsey/SIML/issues/5)
+ * 0.3.6
+  * Fixed issue where singular tags would not multiply (`selector:n`). See [Issue #6](https://github.com/padolsey/SIML/issues/6)
+  * Fixed issue where backtick quotes within regular quotes would get parsed and result in `%HTML_TOKEN%` tokens in the output.
