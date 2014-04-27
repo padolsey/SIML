@@ -1,6 +1,6 @@
 /**
  * SIML (c) James Padolsey 2013
- * @version 0.3.6
+ * @version 0.3.7
  * @license https://github.com/padolsey/SIML/blob/master/LICENSE-MIT
  * @info http://github.com/padolsey/SIML
  */

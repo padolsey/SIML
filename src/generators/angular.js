@@ -24,9 +24,8 @@ siml.angular = new siml.Generator({
 		_default: {
 			type: 'ATTR',
 			make: function(name) {
-				if (this.parentElement.tag === 'input' && siml.html5.INPUT_TYPES.hasOwnProperty(name)) {
-					return 'type="' + name + '"';
-				}
+				var type = siml.html5.config.getPsuedoType(this.parentElement.tag.toLowerCase(), name);
+				if (type) return type;
 				// camelCase -> snake-case
 				return 'ng-' + name.replace(/([a-z])([A-Z])/g, function($0,$1,$2) {
 					return $1 + '-' + $2.toLowerCase();

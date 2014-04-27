@@ -9,6 +9,9 @@ describe('HTML5 Parser: HTML Generation', function() {
 					input:datetime\n\
 					input:radio\n\
 					input:url\n\
+					button:submit\n\
+					button:reset\n\
+					button:button\n\
 			', {pretty:false})).toBe([
 				'<!doctype html>',
 				'<div>',
@@ -17,6 +20,9 @@ describe('HTML5 Parser: HTML Generation', function() {
 					'<input type="datetime"/>',
 					'<input type="radio"/>',
 					'<input type="url"/>',
+					'<button type="submit"></button>',
+					'<button type="reset"></button>',
+					'<button type="button"></button>',
 				'</div>'
 			].join(''));
 		});

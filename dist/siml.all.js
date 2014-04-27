@@ -1,6 +1,6 @@
 /**
  * SIML (c) James Padolsey 2013
- * @version 0.3.6
+ * @version 0.3.7
  * @license https://github.com/padolsey/SIML/blob/master/LICENSE-MIT
  * @info http://github.com/padolsey/SIML
  */
@@ -608,9 +608,15 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	];
 
 	var INPUT_TYPES = {
-		button: 1, checkbox: 1, color: 1, date: 1, datetime: 1, 'datetime-local': 1,
-		email: 1, file: 1, hidden: 1, image: 1, month: 1, number: 1, password: 1, radio: 1,
-		range: 1, reset: 1, search: 1, submit: 1, tel: 1, text: 1, time: 1, url: 1, week: 1
+		button: {
+			button: 1, reset: 1, submit: 1
+		},
+		input: {
+			button: 1, checkbox: 1, color: 1, date: 1, datetime: 1,
+			'datetime-local': 1, email: 1, file: 1, hidden: 1, image: 1,
+			month: 1, number: 1, password: 1, radio: 1, range: 1, reset: 1,
+			search: 1, submit: 1, tel: 1, text: 1, time: 1, url: 1, week: 1
+		}
 	};
 
 	var HTML_SHORT_MAP = {};
@@ -643,14 +649,20 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			doctype: doctypeDirective,
 			dt: doctypeDirective
 		},
+		getPsuedoType: function(tag, name) {
+			var types = INPUT_TYPES[tag];
+
+			if (types && types[name]) {
+				return 'type="' + name + '"';
+			}
+		},
 		pseudos: {
 			_default: {
 				type: 'ATTR',
 				make: function(name) {
-					if (this.parentElement.tag === 'input' && INPUT_TYPES.hasOwnProperty(name)) {
-						return 'type="' + name + '"';
-					}
-					throw new Error('Unknown Pseduo: ' + name);
+					var type = siml.html5.config.getPsuedoType(this.parentElement.tag.toLowerCase(), name);
+					if (type) return type;
+					throw new Error('Unknown Pseudo: ' + name);
 				}
 			}
 		}
@@ -688,9 +700,8 @@ siml.angular = new siml.Generator({
 		_default: {
 			type: 'ATTR',
 			make: function(name) {
-				if (this.parentElement.tag === 'input' && siml.html5.INPUT_TYPES.hasOwnProperty(name)) {
-					return 'type="' + name + '"';
-				}
+				var type = siml.html5.config.getPsuedoType(this.parentElement.tag.toLowerCase(), name);
+				if (type) return type;
 				// camelCase -> snake-case
 				return 'ng-' + name.replace(/([a-z])([A-Z])/g, function($0,$1,$2) {
 					return $1 + '-' + $2.toLowerCase();
