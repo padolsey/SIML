@@ -247,7 +247,7 @@ npm install siml
 var siml = require('siml');
 
 // Using the html5 generator (e.g. to support :checkbox)
-siml.html5.parse('input:checkbox'; // => '<input type="checkbox" />'
+siml.html5.parse('input:checkbox'); // => '<input type="checkbox" />'
 ```
 
 More to come...
