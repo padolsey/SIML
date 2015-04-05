@@ -431,6 +431,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 							break;
 						case 'ExcGroup':
 							throw new Error('SIML: Found ExcGroup in unexpected location');
+							break;
 						default:
 							this.processProperty(childType, child);
 					}
