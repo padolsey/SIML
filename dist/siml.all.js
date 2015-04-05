@@ -1162,22 +1162,21 @@ siml.PARSER = (function(){
         
         		switch (singleA[0]) {
         			case 'Element': {
-        
         				if (seperator.indexOf(',') > -1 || seperator.indexOf('+') > -1) {
         					return ['IncGroup', [singleA,singleB]];
         				}
-        
         				// a>b
         				if (singleA[0] === 'Element') {
         					singleA[1][1].push(singleB); 
         				} else if (singleA[0] === 'IncGroup' || singleA[0] === 'ExcGroup') {
         					singleA[1].push(singleB);
         				}
-        
         				return singleA;
         			}
         			case 'Prototype':
+        				break;
         			case 'Directive':
+        				break;
         			case 'Attribute': {
         				return ['IncGroup', [singleA, singleB]];
         			}
