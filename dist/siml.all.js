@@ -587,6 +587,18 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	siml.parse = function(s, c) {
 		return siml.defaultGenerator.parse(s, c);
 	};
+	siml.file = function(f, c) {
+		var s;
+		var freq = new XMLHttpRequest();
+		freq.overrideMimeType('text/plain');
+		freq.open('GET', f, true);
+		freq.onreadystatechange = function() {
+			if (freq.readyState == 4 && freq.status == '200') {
+				ftext = freq.responseText;
+			}
+		}
+		return siml.defaultGenerator.parse(s, c);
+	}
 
 }());
 
