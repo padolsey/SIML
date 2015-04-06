@@ -177,7 +177,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 			var selector = this.selector.slice();
 			var selectorPortionType;
 			var selectorPortion;
-			
+
 			this.augmentPrototypeSelector(selector);
 
 			for (var i = 0, l = selector.length; i < l; ++i) {
@@ -282,7 +282,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 
 			var branches = [];
 
-			attachTail(excGroup, tail); 	
+			attachTail(excGroup, tail);
 
 			for (var n = 0, nl = exclusives.length; n < nl; ++n) {
 				specChildren[specChildIndex] = exclusives[n]; // Mutate
@@ -324,7 +324,7 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 						}
 
 						if (tailChildType === 'sibling') {
-							var cChildren = getChildren(child); 
+							var cChildren = getChildren(child);
 							if (!cChildren || !cChildren.length) {
 								// Add tailChild as sibling of child
 								children[i] = ['IncGroup', [
@@ -587,6 +587,18 @@ var siml = typeof module != 'undefined' && module.exports ? module.exports : win
 	siml.parse = function(s, c) {
 		return siml.defaultGenerator.parse(s, c);
 	};
+	siml.file = function(f, c) {
+		var s;
+		var freq = new XMLHttpRequest();
+		freq.overrideMimeType('text/plain');
+		freq.open('GET', f, true);
+		freq.onreadystatechange = function() {
+			if (freq.readyState == 4 && freq.status == '200') {
+				ftext = freq.responseText;
+			}
+		}
+		return siml.defaultGenerator.parse(s, c);
+	}
 
 }());
 
@@ -717,7 +729,7 @@ siml.PARSER = (function(){
    *
    * http://pegjs.majda.cz/
    */
-  
+
   function quote(s) {
     /*
      * ECMA-262, 5th ed., 7.8.4: All characters may appear literally in a
@@ -740,7 +752,7 @@ siml.PARSER = (function(){
       .replace(/[\x00-\x07\x0B\x0E-\x1F\x80-\uFFFF]/g, escape)
       + '"';
   }
-  
+
   var result = {
     /*
      * Parses the input with a generated parser. If the parsing is successfull,
@@ -793,7 +805,7 @@ siml.PARSER = (function(){
         "hexDigit": parse_hexDigit,
         "_": parse__
       };
-      
+
       if (startRule !== undefined) {
         if (parseFunctions[startRule] === undefined) {
           throw new Error("Invalid rule name: " + quote(startRule) + ".");
@@ -801,28 +813,28 @@ siml.PARSER = (function(){
       } else {
         startRule = "MSeries";
       }
-      
+
       var pos = { offset: 0, line: 1, column: 1, seenCR: false };
       var reportFailures = 0;
       var rightmostFailuresPos = { offset: 0, line: 1, column: 1, seenCR: false };
       var rightmostFailuresExpected = [];
-      
+
       function padLeft(input, padding, length) {
         var result = input;
-        
+
         var padLength = length - input.length;
         for (var i = 0; i < padLength; i++) {
           result = padding + result;
         }
-        
+
         return result;
       }
-      
+
       function escape(ch) {
         var charCode = ch.charCodeAt(0);
         var escapeChar;
         var length;
-        
+
         if (charCode <= 0xFF) {
           escapeChar = 'x';
           length = 2;
@@ -830,10 +842,10 @@ siml.PARSER = (function(){
           escapeChar = 'u';
           length = 4;
         }
-        
+
         return '\\' + escapeChar + padLeft(charCode.toString(16).toUpperCase(), '0', length);
       }
-      
+
       function clone(object) {
         var result = {};
         for (var key in object) {
@@ -841,10 +853,10 @@ siml.PARSER = (function(){
         }
         return result;
       }
-      
+
       function advance(pos, n) {
         var endOffset = pos.offset + n;
-        
+
         for (var offset = pos.offset; offset < endOffset; offset++) {
           var ch = input.charAt(offset);
           if (ch === "\n") {
@@ -860,27 +872,27 @@ siml.PARSER = (function(){
             pos.seenCR = false;
           }
         }
-        
+
         pos.offset += n;
       }
-      
+
       function matchFailed(failure) {
         if (pos.offset < rightmostFailuresPos.offset) {
           return;
         }
-        
+
         if (pos.offset > rightmostFailuresPos.offset) {
           rightmostFailuresPos = clone(pos);
           rightmostFailuresExpected = [];
         }
-        
+
         rightmostFailuresExpected.push(failure);
       }
-      
+
       function parse_MSeries() {
         var result0, result1, result2, result3, result4;
         var pos0, pos1, pos2;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         result0 = parse__();
@@ -987,17 +999,17 @@ siml.PARSER = (function(){
         		if (!head) {
         			return ['IncGroup', []];
         		}
-        
+
         		var all = [];
-        
+
         		if (head[0] !== 'Element' || body.length) {
         			head = ['IncGroup', [head]];
         		}
-        
+
         		for (var i = 0, l = body.length; i < l; ++i) {
         			head[1].push(body[i][1]);
         		}
-        
+
         		return head;
         	})(pos0.offset, pos0.line, pos0.column, result0[1], result0[2]);
         }
@@ -1006,11 +1018,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_CSeries() {
         var result0, result1, result2, result3, result4;
         var pos0, pos1, pos2;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         result0 = parse_LSeries();
@@ -1063,7 +1075,7 @@ siml.PARSER = (function(){
         if (result0 !== null) {
           result0 = (function(offset, line, column, a, b) {
         		if (b[3]) {
-        			return ['IncGroup', [a, b[3]], 'CommaGroup']; 
+        			return ['IncGroup', [a, b[3]], 'CommaGroup'];
         		}
         		return a;
         	})(pos0.offset, pos0.line, pos0.column, result0[0], result0[1]);
@@ -1073,11 +1085,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_LSeries() {
         var result0, result1, result2, result3, result4, result5, result6, result7, result8;
         var pos0, pos1, pos2;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         result0 = parse_Single();
@@ -1143,10 +1155,10 @@ siml.PARSER = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, line, column, singleA, tail, decl) {
-        
+
         		var seperator = tail[0] && tail[0].join('');
         		var singleB = tail[1];
-        
+
         		if (decl) {
         			var declarationChildren = decl[1][0];
         			if (singleB) {
@@ -1155,25 +1167,25 @@ siml.PARSER = (function(){
         				if (singleA[0] === 'Element') singleA[1][1].push(declarationChildren);
         			}
         		}
-        
+
         		if (!tail.length) {
         			return singleA;
         		}
-        
+
         		switch (singleA[0]) {
         			case 'Element': {
-        
+
         				if (seperator.indexOf(',') > -1 || seperator.indexOf('+') > -1) {
         					return ['IncGroup', [singleA,singleB]];
         				}
-        
+
         				// a>b
         				if (singleA[0] === 'Element') {
-        					singleA[1][1].push(singleB); 
+        					singleA[1][1].push(singleB);
         				} else if (singleA[0] === 'IncGroup' || singleA[0] === 'ExcGroup') {
         					singleA[1].push(singleB);
         				}
-        
+
         				return singleA;
         			}
         			case 'Prototype':
@@ -1341,12 +1353,12 @@ siml.PARSER = (function(){
           }
           if (result0 !== null) {
             result0 = (function(offset, line, column, head, body, selector, tail) {
-          
+
           		var all = [];
           		var separator = '';
-          
+
           		body.unshift([,,,head]);
-          
+
           		if (tail) {
           			if (tail[0] === 'Declaration') {
           				tail = tail[1][0];
@@ -1355,7 +1367,7 @@ siml.PARSER = (function(){
           				tail = tail[0];
           			}
           		}
-          
+
           		for (var i = 0, l = body.length; i < l; ++i) {
           			if (body[i][3][2] === 'CommaGroup') {
           				// Make (a,b,c/g) be considered as ((a/b/c/)/g)
@@ -1377,11 +1389,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_ExcGroupRHS() {
         var result0, result1;
         var pos0, pos1;
-        
+
         result0 = parse_ChildrenDeclaration();
         if (result0 === null) {
           pos0 = clone(pos);
@@ -1431,11 +1443,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_ChildrenDeclaration() {
         var result0, result1, result2;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (input.charCodeAt(pos.offset) === 123) {
@@ -1484,10 +1496,10 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_Single() {
         var result0;
-        
+
         result0 = parse_Attribute();
         if (result0 === null) {
           result0 = parse_PrototypeDefinition();
@@ -1506,11 +1518,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_Element() {
         var result0;
         var pos0;
-        
+
         pos0 = clone(pos);
         result0 = parse_SingleSelector();
         if (result0 !== null) {
@@ -1523,11 +1535,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_PrototypeDefinition() {
         var result0, result1, result2, result3, result4, result5, result6;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         result0 = parse_PrototypeName();
@@ -1663,11 +1675,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_PrototypeName() {
         var result0, result1, result2;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (/^[a-zA-Z_$]/.test(input.charAt(pos.offset))) {
@@ -1720,11 +1732,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_SingleSelector() {
         var result0, result1, result2;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         result0 = parse_selectorTag();
@@ -1777,10 +1789,10 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_selectorRepeatableComponent() {
         var result0;
-        
+
         result0 = parse_selectorIdClass();
         if (result0 === null) {
           result0 = parse_selectorPseudo();
@@ -1790,11 +1802,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_selectorTag() {
         var result0, result1;
         var pos0;
-        
+
         pos0 = clone(pos);
         if (/^[a-z0-9_\-]/i.test(input.charAt(pos.offset))) {
           result1 = input.charAt(pos.offset);
@@ -1830,11 +1842,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_selectorIdClass() {
         var result0, result1, result2;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (/^[#.]/.test(input.charAt(pos.offset))) {
@@ -1896,11 +1908,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_selectorAttr() {
         var result0, result1, result2, result3;
         var pos0, pos1, pos2;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (input.charCodeAt(pos.offset) === 91) {
@@ -2001,11 +2013,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_selectorPseudo() {
         var result0, result1, result2, result3;
         var pos0, pos1, pos2;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (input.charCodeAt(pos.offset) === 58) {
@@ -2091,11 +2103,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_selectorAttrValue() {
         var result0, result1;
         var pos0;
-        
+
         pos0 = clone(pos);
         result0 = parse_string();
         if (result0 !== null) {
@@ -2141,11 +2153,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_Text() {
         var result0;
         var pos0;
-        
+
         pos0 = clone(pos);
         result0 = parse_string();
         if (result0 !== null) {
@@ -2158,11 +2170,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_HTML() {
         var result0;
         var pos0;
-        
+
         pos0 = clone(pos);
         result0 = parse_html();
         if (result0 !== null) {
@@ -2175,11 +2187,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_Attribute() {
         var result0, result1, result2, result3, result4, result5, result6;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         result0 = parse_attributeName();
@@ -2412,11 +2424,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_attributeName() {
         var result0, result1;
         var pos0;
-        
+
         reportFailures++;
         pos0 = clone(pos);
         if (/^[A-Za-z0-9\-_]/.test(input.charAt(pos.offset))) {
@@ -2463,11 +2475,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_Directive() {
         var result0, result1, result2;
         var pos0, pos1;
-        
+
         reportFailures++;
         pos0 = clone(pos);
         pos1 = clone(pos);
@@ -2510,11 +2522,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_DirectiveName() {
         var result0, result1, result2, result3;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (input.charCodeAt(pos.offset) === 64) {
@@ -2581,11 +2593,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_DirectiveArguments() {
         var result0, result1, result2;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (input.charCodeAt(pos.offset) === 40) {
@@ -2648,11 +2660,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_DirectiveChildren() {
         var result0, result1, result2, result3;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         if (input.charCodeAt(pos.offset) === 59) {
           result0 = ";";
@@ -2773,11 +2785,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_braced() {
         var result0, result1, result2;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (input.charCodeAt(pos.offset) === 40) {
@@ -2836,11 +2848,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_nonBraceCharacters() {
         var result0, result1;
         var pos0;
-        
+
         pos0 = clone(pos);
         result1 = parse_nonBraceCharacter();
         if (result1 !== null) {
@@ -2860,10 +2872,10 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_nonBraceCharacter() {
         var result0;
-        
+
         if (/^[^()]/.test(input.charAt(pos.offset))) {
           result0 = input.charAt(pos.offset);
           advance(pos, 1);
@@ -2875,11 +2887,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_arrayElements() {
         var result0, result1, result2, result3, result4;
         var pos0, pos1, pos2;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         result0 = parse_value();
@@ -2968,11 +2980,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_value() {
         var result0, result1;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         result0 = parse_string();
         if (result0 !== null) {
@@ -3056,11 +3068,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_string() {
         var result0, result1, result2;
         var pos0, pos1;
-        
+
         reportFailures++;
         pos0 = clone(pos);
         pos1 = clone(pos);
@@ -3128,11 +3140,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_html() {
         var result0, result1, result2;
         var pos0, pos1;
-        
+
         reportFailures++;
         pos0 = clone(pos);
         pos1 = clone(pos);
@@ -3196,11 +3208,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_simpleString() {
         var result0, result1;
         var pos0;
-        
+
         reportFailures++;
         pos0 = clone(pos);
         if (/^[a-zA-Z0-9$@#]/.test(input.charAt(pos.offset))) {
@@ -3243,11 +3255,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_number() {
         var result0, result1, result2, result3;
         var pos0, pos1;
-        
+
         reportFailures++;
         pos0 = clone(pos);
         pos1 = clone(pos);
@@ -3369,11 +3381,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_int() {
         var result0, result1, result2;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         result0 = parse_digit19();
@@ -3468,11 +3480,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_frac() {
         var result0, result1;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (input.charCodeAt(pos.offset) === 46) {
@@ -3504,11 +3516,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_exp() {
         var result0, result1;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         result0 = parse_e();
@@ -3532,11 +3544,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_digits() {
         var result0, result1;
         var pos0;
-        
+
         pos0 = clone(pos);
         result1 = parse_digit();
         if (result1 !== null) {
@@ -3556,11 +3568,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_e() {
         var result0, result1;
         var pos0, pos1;
-        
+
         pos0 = clone(pos);
         pos1 = clone(pos);
         if (/^[eE]/.test(input.charAt(pos.offset))) {
@@ -3601,10 +3613,10 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_digit() {
         var result0;
-        
+
         if (/^[0-9]/.test(input.charAt(pos.offset))) {
           result0 = input.charAt(pos.offset);
           advance(pos, 1);
@@ -3616,10 +3628,10 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_digit19() {
         var result0;
-        
+
         if (/^[1-9]/.test(input.charAt(pos.offset))) {
           result0 = input.charAt(pos.offset);
           advance(pos, 1);
@@ -3631,10 +3643,10 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse_hexDigit() {
         var result0;
-        
+
         if (/^[0-9a-fA-F]/.test(input.charAt(pos.offset))) {
           result0 = input.charAt(pos.offset);
           advance(pos, 1);
@@ -3646,10 +3658,10 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
+
       function parse__() {
         var result0, result1;
-        
+
         reportFailures++;
         result0 = [];
         if (/^[ \t\n\r]/.test(input.charAt(pos.offset))) {
@@ -3679,11 +3691,11 @@ siml.PARSER = (function(){
         }
         return result0;
       }
-      
-      
+
+
       function cleanupExpected(expected) {
         expected.sort();
-        
+
         var lastExpected = null;
         var cleanExpected = [];
         for (var i = 0; i < expected.length; i++) {
@@ -3694,10 +3706,10 @@ siml.PARSER = (function(){
         }
         return cleanExpected;
       }
-      
-      
-      
-      
+
+
+
+
       	var toString = {}.toString;
       	function deepCopyArray(arr) {
       		var out = [];
@@ -3706,11 +3718,11 @@ siml.PARSER = (function(){
       		}
       		return out;
       	}
-      
+
       	function escapeHTML(h) {
       		return String(h).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
       	}
-      
+
       	// Replace all strings with recoverable string tokens:
       	// This is done to make comment-removal possible and safe.
       	var stringTokens = [
@@ -3719,77 +3731,77 @@ siml.PARSER = (function(){
       	function resolveStringToken(tok) {
       		return stringTokens[tok.substring('%%__STRING_TOKEN___%%'.length)]
       	}
-      
+
       	// Replace HTML with string tokens first
       	input = input.replace(/(`+)((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
       		return '%%__HTML_TOKEN___%%' + (stringTokens.push(
       			[$1, $2.replace(/\\`/g, '\`')]
       		) - 1);
       	});
-      
+
       	input = input.replace(/(["'])((?:\\\1|[^\1])*?)\1/g, function($0, $1, $2) {
       		return '%%__STRING_TOKEN___%%' + (stringTokens.push(
       			[$1, $2.replace(/\\'/g, '\'').replace(/\\"/g, '"')]
       		) - 1);
       	});
-      
+
       	input = input.replace(/(^|\n)\s*\\([^\n\r]+)/g, function($0, $1, $2) {
       		return $1 + '%%__STRING_TOKEN___%%' + (stringTokens.push([$1, $2]) - 1);
       	});
-      
+
       	var isCurly = /\/\*\s*siml:curly=true\s*\*\//i.test(input);
-      
+
       	// Remove comments:
       	input = input.replace(/\/\*[\s\S]*?\*\//g, '');
       	input = input.replace(/\/\/.+?(?=[\r\n])/g, '');
-      
+
       	(function() {
-      
+
       		// Avoid magical whitespace if we're definitely using curlies:
       		if (isCurly) {
       			return;
       		}
-      
+
       		// Here we impose hierarchical curlies on the basis of indentation
       		// This is used to make, e.g.
       		// a\n\tb
       		// into
       		// a{b}
-      
+
       		input = input.replace(/^(?:\s*\n)+/g, '');
-      
+
       		var cur;
       		var lvl = 0;
       		var lines = [];
       		var blockedFromClosing = {};
       		var step = null;
-      
+
       		var braceDepth = 0;
       		var curlyDepth = 0;
-      
+
       		input = input.split(/[\r\n]+/);
-      
+
       		for (var i = 0, l = input.length; i < l; ++i) {
-      
+
       			var line = input[i];
-      
-      			var indent = line.match(/^\s*/)[0]; 
+
+      			var indent = line.match(/^\s*/)[0];
       			var indentLevel = (indent.match(/\s/g)||[]).length;
-      
+
       			var nextIndentLevel = ((input[i+1] || '').match(/^\s*/)[0].match(/\s/g)||[]).length;
-      
+
       			if (step == null && nextIndentLevel !== indentLevel) {
       				step = nextIndentLevel - indentLevel;
       			}
-      
+
       			braceDepth += (line.match(/\(/g)||[]).length - (line.match(/\)/g)||[]).length;
       			curlyDepth += (line.match(/\{/g)||[]).length - (line.match(/\}/g)||[]).length;
-      
+
       			if (/^\s*$/.test(line)) {
       				lines.push(line);
       				continue;
       			}
-      
+
       			if (indentLevel < cur) { // dedent
       				var diff = cur - indentLevel;
       				while (1) {
@@ -3804,41 +3816,41 @@ siml.PARSER = (function(){
       					lines[i-1] += '}';
       				}
       			}
-      
+
       			if (curlyDepth || braceDepth) {
       				// Lines within a curly/brace nesting are blocked from future '}' closes
       				blockedFromClosing[i] = 1;
       				lines.push(line);
       				continue;
       			}
-      
+
       			line = line.substring(indent.length);
-      
+
       			// Don't seek to add curlies to places where curlies already exist:
       			if (/[{}]\s*$/.test(line)) {
       				lines.push(line);
       				continue;
       			}
-      
+
       			if (nextIndentLevel > indentLevel) { // indent
-      				lvl++; 
+      				lvl++;
       				lines.push(indent + line + '{');
       			} else {
       				lines.push(indent+line);
       			}
-      
-      			cur = indentLevel;  
-      
+
+      			cur = indentLevel;
+
       		}
-      
+
       		input = lines.join('\n'); //{{ // make curlies BALANCE for peg!
       		input += Array(lvl+1).join('}');
       	}());
-      
-      
-      
+
+
+
       var result = parseFunctions[startRule]();
-      
+
       /*
        * The parser is now in one of the following three states:
        *
@@ -3867,7 +3879,7 @@ siml.PARSER = (function(){
         var offset = Math.max(pos.offset, rightmostFailuresPos.offset);
         var found = offset < input.length ? input.charAt(offset) : null;
         var errorPosition = pos.offset > rightmostFailuresPos.offset ? pos : rightmostFailuresPos;
-        
+
         throw new this.SyntaxError(
           cleanupExpected(rightmostFailuresExpected),
           found,
@@ -3876,20 +3888,20 @@ siml.PARSER = (function(){
           errorPosition.column
         );
       }
-      
+
       return result;
     },
-    
+
     /* Returns the parser source code. */
     toSource: function() { return this._source; }
   };
-  
+
   /* Thrown when a parser encounters a syntax error. */
-  
+
   result.SyntaxError = function(expected, found, offset, line, column) {
     function buildMessage(expected, found) {
       var expectedHumanized, foundHumanized;
-      
+
       switch (expected.length) {
         case 0:
           expectedHumanized = "end of input";
@@ -3902,12 +3914,12 @@ siml.PARSER = (function(){
             + " or "
             + expected[expected.length - 1];
       }
-      
+
       foundHumanized = found ? quote(found) : "end of input";
-      
+
       return "Expected " + expectedHumanized + " but " + foundHumanized + " found.";
     }
-    
+
     this.name = "SyntaxError";
     this.expected = expected;
     this.found = found;
@@ -3916,9 +3928,9 @@ siml.PARSER = (function(){
     this.line = line;
     this.column = column;
   };
-  
+
   result.SyntaxError.prototype = Error.prototype;
-  
+
   return result;
 })()
 }());
